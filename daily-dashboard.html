@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>吉久昌志 — 今日の羅針盤</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Zen+Kaku+Gothic+New:wght@300;400;700&family=Shippori+Mincho:wght@400;600&display=swap');
+:root{--ink:#1a1410;--paper:#f5f0e8;--gold:#c9a84c;--red:#c0392b;--blue:#2c5f8a;--muted:#8a7f72;--border:rgba(201,168,76,0.3);--card:rgba(255,252,245,0.92);--green:#27ae60;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Zen Kaku Gothic New',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+/* APIキー設定画面 */
+.api-setup{position:fixed;inset:0;background:var(--paper);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;}
+.api-setup.hide{display:none;}
+.api-logo{font-size:48px;margin-bottom:16px;}
+.api-title{font-family:'Shippori Mincho',serif;font-size:22px;margin-bottom:8px;text-align:center;}
+.api-sub{font-size:12px;color:var(--muted);text-align:center;line-height:1.8;margin-bottom:24px;}
+.api-inp{width:100%;padding:14px;font-size:13px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--ink);outline:none;margin-bottom:12px;font-family:'Zen Kaku Gothic New',sans-serif;}
+.api-inp:focus{border-color:var(--gold);}
+.api-btn{width:100%;padding:14px;background:var(--gold);border:none;border-radius:4px;color:#fff;font-size:14px;letter-spacing:2px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;}
+.api-note{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.7;}
+.api-saved{font-size:11px;color:var(--green);text-align:center;margin-top:8px;display:none;}
+
+
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 0%,rgba(201,168,76,0.07) 0%,transparent 55%),radial-gradient(ellipse at 85% 100%,rgba(44,95,138,0.05) 0%,transparent 55%);pointer-events:none;z-index:0;}
+.hdr{position:sticky;top:0;z-index:100;background:rgba(245,240,232,0.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:10px 16px 0;}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.app-name{font-size:9px;color:var(--muted);letter-spacing:4px;margin-bottom:2px;}
+.hdr-date{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:400;line-height:1.2;}
+.hdr-sub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
+.score-num{font-family:'Shippori Mincho',serif;font-size:34px;color:var(--gold);line-height:1;}
+.score-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;padding-bottom:1px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:none;padding:7px 13px;font-size:11px;letter-spacing:1px;background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;font-family:'Zen Kaku Gothic New',sans-serif;}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold);}
+.main{position:relative;z-index:1;padding:14px 14px 90px;}
+.sec{display:none;}.sec.on{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:14px;margin-bottom:11px;}
+.card-ttl{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:8px;}
+.card-ttl::after{content:'';flex:1;height:1px;background:var(--border);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px;}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:11px;text-align:center;cursor:pointer;}
+.mc-ico{font-size:22px;margin-bottom:5px;}
+.mc-ttl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;}
+.mc-val{font-family:'Shippori Mincho',serif;font-size:15px;}
+.mc-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.frow{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.flbl{font-size:10px;color:var(--muted);width:36px;flex:none;}
+.fbar{flex:1;height:4px;background:rgba(201,168,76,0.12);border-radius:2px;overflow:hidden;}
+.ffill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),#e8c46a);transition:width 1.1s ease;}
+.fval{font-family:'Shippori Mincho',serif;font-size:12px;width:36px;text-align:right;flex:none;}
+.compass-wrap{display:flex;align-items:center;gap:16px;}
+.compass-svg{width:96px;height:96px;flex:none;}
+.lucky-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.lucky-row:last-child{border:none;}
+.lk{color:var(--muted);font-size:9px;letter-spacing:1px;}
+.lv{font-family:'Shippori Mincho',serif;font-size:13px;}
+.cal-nav-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.cal-month{font-family:'Shippori Mincho',serif;font-size:19px;}
+.cal-btn{background:none;border:1px solid var(--border);color:var(--ink);width:30px;height:30px;border-radius:2px;cursor:pointer;font-size:15px;}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;}
+.cdh{font-size:9px;color:var(--muted);padding:3px 0;}
+.cd{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;border-radius:2px;cursor:pointer;position:relative;}
+.cd.today{background:var(--gold);color:#fff;font-weight:700;}
+.cd.om{color:rgba(26,20,16,0.2);}
+.cd.sun{color:var(--red);}
+.cd.sat{color:var(--blue);}
+.cd.today.sun,.cd.today.sat{color:#fff;}
+.cd.workday{background:rgba(44,95,138,0.08);}
+.cd-dot{width:3px;height:3px;border-radius:50%;background:var(--gold);margin-top:1px;}
+.cd.today .cd-dot{background:#fff;}
+.sch-item{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(201,168,76,0.08);}
+.sch-time{font-family:'Shippori Mincho',serif;font-size:12px;color:var(--muted);width:38px;flex:none;text-align:right;}
+.sch-body{flex:1;}
+.sch-ttl{font-size:13px;font-weight:700;}
+.sch-det{font-size:11px;color:var(--muted);margin-top:1px;}
+.tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:1px;margin-top:3px;}
+.tag-work{background:rgba(44,95,138,0.1);color:var(--blue);}
+.tag-personal{background:rgba(201,168,76,0.1);color:var(--gold);}
+.tag-health{background:rgba(39,174,96,0.1);color:var(--green);}
+.tag-family{background:rgba(192,57,43,0.1);color:var(--red);}
+.bio-canvas{width:100%;height:180px;}
+.bio3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:11px;}
+.bio-card{text-align:center;padding:12px 6px;background:var(--card);border:1px solid var(--border);border-radius:2px;}
+.bio-ico{font-size:20px;margin-bottom:4px;}
+.bio-nm{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:4px;}
+.bio-val{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:600;}
+.bio-st{font-size:10px;color:var(--muted);margin-top:3px;}
+.bio-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.bio-li{display:flex;align-items:center;gap:5px;font-size:10px;}
+.bio-dot{width:7px;height:7px;border-radius:50%;}
+.sign-btn{padding:5px 9px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:2px;background:transparent;font-family:'Zen Kaku Gothic New',sans-serif;color:var(--ink);margin:3px;}
+.sign-btn.on{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+.sign-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid rgba(201,168,76,0.1);cursor:pointer;}
+.sign-detail{background:rgba(201,168,76,0.04);border:1px solid var(--border);border-radius:2px;padding:13px;margin-top:7px;display:none;}
+.sign-detail.open{display:block;}
+.kw-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.kw{font-size:10px;padding:3px 7px;border:1px solid var(--border);border-radius:10px;color:var(--muted);}
+.chk-hdr{display:flex;justify-content:space-between;align-items:center;padding:13px;background:linear-gradient(135deg,rgba(44,95,138,0.07),rgba(201,168,76,0.05));border:1px solid var(--border);border-radius:2px;margin-bottom:11px;}
+.chk-prog{font-family:'Shippori Mincho',serif;font-size:26px;color:var(--gold);}
+.chk-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;}
+.chk-cat-ttl{font-size:9px;color:var(--muted);letter-spacing:3px;padding:7px 0;border-bottom:1px solid var(--border);margin-bottom:7px;}
+.chk-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid rgba(201,168,76,0.07);cursor:pointer;}
+.chk-circle{width:23px;height:23px;border-radius:50%;border:2px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;}
+.chk-item.done .chk-circle{background:var(--gold);border-color:var(--gold);color:#fff;}
+.chk-item.done .chk-lbl2{text-decoration:line-through;color:var(--muted);}
+.chk-lbl2{flex:1;font-size:13px;}
+.chk-time2{font-size:10px;color:var(--muted);}
+.np-top{background:linear-gradient(135deg,rgba(44,95,138,0.08),rgba(201,168,76,0.06));border:1px solid var(--border);border-radius:2px;padding:14px;margin-bottom:11px;}
+.np-sel-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.np-sel-ttl{font-size:9px;color:var(--muted);letter-spacing:3px;}
+.np-date-sel{font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;background:transparent;border:1px solid var(--border);color:var(--ink);padding:4px 8px;border-radius:2px;outline:none;}
+.np-3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;text-align:center;}
+.np-big{font-family:'Shippori Mincho',serif;font-size:20px;}
+.np-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(201,168,76,0.1);}
+.pay-row:last-child{border:none;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.sum-item{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:12px;}
+.sum-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.sum-val{font-family:'Shippori Mincho',serif;font-size:20px;}
+.sum-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.tab-sw{display:flex;border:1px solid var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px;}
+.ts-btn{flex:1;padding:9px;font-size:11px;font-family:'Zen Kaku Gothic New',sans-serif;background:none;border:none;color:var(--muted);cursor:pointer;letter-spacing:1px;}
+.ts-btn.on{background:var(--gold);color:#fff;}
+.upload-zone{border:2px dashed var(--border);border-radius:4px;padding:24px;text-align:center;cursor:pointer;margin-bottom:11px;}
+.upload-zone input{display:none;}
+.upload-ico{font-size:28px;margin-bottom:8px;}
+.upload-txt{font-size:12px;color:var(--muted);line-height:1.6;}
+.ai-result{background:rgba(201,168,76,0.05);border:1px solid var(--border);border-radius:2px;padding:12px;margin-top:10px;display:none;}
+.ai-result.show{display:block;}
+.ai-loading{display:none;text-align:center;padding:16px;font-size:12px;color:var(--muted);}
+.ai-loading.show{display:block;}
+.form-group{margin-bottom:12px;}
+.form-lbl{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:5px;display:block;}
+.form-inp{width:100%;padding:10px 12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;background:#fff;border:1px solid var(--border);border-radius:2px;color:var(--ink);outline:none;}
+.form-inp:focus{border-color:var(--gold);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.btn-gold{width:100%;padding:13px;background:var(--gold);border:none;border-radius:2px;color:#fff;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;}
+.btn-sub{padding:13px 18px;background:none;border:1px solid var(--border);border-radius:2px;color:var(--muted);font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;cursor:pointer;}
+.fab{position:fixed;bottom:18px;right:18px;width:50px;height:50px;background:var(--gold);border:none;border-radius:50%;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(201,168,76,0.4);display:none;align-items:center;justify-content:center;z-index:200;}
+.overlay{position:fixed;inset:0;background:rgba(26,20,16,0.55);z-index:300;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--paper);width:100%;border-radius:10px 10px 0 0;padding:18px;max-height:82vh;overflow-y:auto;}
+.modal-handle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+.modal-ttl{font-family:'Shippori Mincho',serif;font-size:17px;margin-bottom:14px;}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(245,240,232,0.97);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;z-index:100;}
+.notice{background:rgba(201,168,76,0.08);border-left:3px solid var(--gold);padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.7;border-radius:0 2px 2px 0;margin-bottom:11px;}
+.sep{height:1px;background:var(--border);margin:10px 0;}
+</style>
+</head>
+<body>
+
+<!-- APIキー設定画面 -->
+<div class="api-setup" id="apiSetup">
+  <div class="api-logo">🔑</div>
+  <div class="api-title">APIキーを設定</div>
+  <div class="api-sub">
+    写真から日報を自動読み取りするために<br>
+    AnthropicのAPIキーが必要です。<br>
+    キーはこの端末にのみ保存されます。
+  </div>
+  <input type="password" class="api-inp" id="apiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off">
+  <button class="api-btn" onclick="saveApiKey()">設定して始める</button>
+  <div class="api-note">
+    キーは端末内にのみ保存されます。<br>
+    外部には一切送信されません。<br><br>
+    ※ キーをお持ちでない場合は<br>
+    console.anthropic.com で取得できます
+  </div>
+  <div class="api-saved" id="apiSaved">✅ 設定済みです</div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="app-name">今日の羅針盤 — 吉久昌志</div>
+      <div class="hdr-date" id="hdrDate">読み込み中...</div>
+      <div class="hdr-sub" id="hdrSub">大丸交通 葛飾510あ1508</div>
+    </div>
+    <div style="text-align:right">
+      <div class="score-num" id="scoreNum">-</div>
+      <div class="score-lbl">TODAY</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab on" data-sec="today">今日</button>
+    <button class="tab" data-sec="calendar">カレンダー</button>
+    <button class="tab" data-sec="bio">バイオリズム</button>
+    <button class="tab" data-sec="astro">占星術</button>
+    <button class="tab" data-sec="check">チェック</button>
+    <button class="tab" data-sec="nippo">日報</button>
+    <button class="tab" data-sec="monthly">月集計</button>
+  </nav>
+</header>
+
+<main class="main">
+
+<section class="sec on" id="sec-today">
+  <div class="g2">
+    <div class="mc" onclick="goSec('bio')"><div class="mc-ico">🌊</div><div class="mc-ttl">バイオリズム</div><div class="mc-val" id="bioQ">-</div><div class="mc-sub">体/感/知</div></div>
+    <div class="mc" onclick="goSec('astro')"><div class="mc-ico" id="mySignIco">♌</div><div class="mc-ttl">獅子座 今日</div><div class="mc-val" id="astroQ">-</div><div class="mc-sub">吉久昌志</div></div>
+    <div class="mc" onclick="goSec('check')"><div class="mc-ico">✅</div><div class="mc-ttl">チェックリスト</div><div class="mc-val" id="checkQ">0/8</div><div class="mc-sub">本日の達成</div></div>
+    <div class="mc" onclick="goSec('nippo')"><div class="mc-ico">🚕</div><div class="mc-ttl">前回乗務</div><div class="mc-val" id="lastSales">-</div><div class="mc-sub" id="lastDate">-</div></div>
+  </div>
+  <div class="card"><div class="card-ttl">今日の運勢</div><div id="fortuneRows"></div><div class="sep"></div><div id="fortuneMsg" style="font-size:12px;color:var(--muted);line-height:1.8;"></div></div>
+  <div class="card">
+    <div class="card-ttl">開運情報</div>
+    <div class="compass-wrap">
+      <svg class="compass-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="1"/>
+        <text x="50" y="9"  text-anchor="middle" font-size="8" fill="rgba(26,20,16,0.45)" font-family="serif">北</text>
+        <text x="93" y="53" text-anchor="middle" font-size="8" fill="rgba(26,20,16,0.45)" font-family="serif">東</text>
+        <text x="50" y="97" text-anchor="middle" font-size="8" fill="rgba(26,20,16,0.45)" font-family="serif">南</text>
+        <text x="7"  y="53" text-anchor="middle" font-size="8" fill="rgba(26,20,16,0.45)" font-family="serif">西</text>
+        <path id="cArc" d="" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.45)" stroke-width="1"/>
+        <g id="cNeedle" transform="rotate(0,50,50)">
+          <polygon points="50,14 47,50 50,54 53,50" fill="#c0392b" opacity=".9"/>
+          <polygon points="50,86 47,50 50,46 53,50" fill="rgba(26,20,16,0.25)"/>
+        </g>
+        <circle cx="50" cy="50" r="3" fill="var(--gold)"/>
+      </svg>
+      <div style="flex:1">
+        <div class="lucky-row"><span class="lk">吉方位</span><span class="lv" id="lDir">-</span></div>
+        <div class="lucky-row"><span class="lk">ラッキーカラー</span><span class="lv" id="lCol">-</span></div>
+        <div class="lucky-row"><span class="lk">ラッキーナンバー</span><span class="lv" id="lNum">-</span></div>
+        <div class="lucky-row"><span class="lk">ラッキーアイテム</span><span class="lv" id="lItm">-</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-ttl">今日の予定</div><div id="todaySch"></div></div>
+  <div class="card"><div class="card-ttl">家族・記念日</div><div id="familyToday"></div></div>
+</section>
+
+<section class="sec" id="sec-calendar">
+  <div class="card">
+    <div class="cal-nav-row">
+      <button class="cal-btn" onclick="chMon(-1)">&#8249;</button>
+      <div class="cal-month" id="calTtl">-</div>
+      <button class="cal-btn" onclick="chMon(1)">&#8250;</button>
+    </div>
+    <div class="cg" id="calHdr"></div>
+    <div class="cg" id="calGrid" style="margin-top:3px;"></div>
+  </div>
+  <div class="card"><div class="card-ttl">スケジュール</div><div id="schList"></div></div>
+</section>
+
+<section class="sec" id="sec-bio">
+  <div class="notice">生年月日：1961年7月27日（吉久昌志）で計算済みです。</div>
+  <div class="card">
+    <div class="card-ttl">バイオリズム波形 — 28日間</div>
+    <canvas class="bio-canvas" id="bioCv"></canvas>
+    <div class="bio-legend">
+      <div class="bio-li"><div class="bio-dot" style="background:#e74c3c"></div>身体(23日)</div>
+      <div class="bio-li"><div class="bio-dot" style="background:#3498db"></div>感情(28日)</div>
+      <div class="bio-li"><div class="bio-dot" style="background:#f39c12"></div>知性(33日)</div>
+      <div class="bio-li"><div class="bio-dot" style="background:#9b59b6"></div>直感(38日)</div>
+    </div>
+  </div>
+  <div class="bio3">
+    <div class="bio-card"><div class="bio-ico">💪</div><div class="bio-nm">身体</div><div class="bio-val" id="bPh" style="color:#e74c3c">-</div><div class="bio-st" id="bPhS">-</div></div>
+    <div class="bio-card"><div class="bio-ico">💙</div><div class="bio-nm">感情</div><div class="bio-val" id="bEm" style="color:#3498db">-</div><div class="bio-st" id="bEmS">-</div></div>
+    <div class="bio-card"><div class="bio-ico">🧠</div><div class="bio-nm">知性</div><div class="bio-val" id="bIn" style="color:#f39c12">-</div><div class="bio-st" id="bInS">-</div></div>
+  </div>
+  <div class="card" style="margin-top:11px;"><div class="card-ttl">今日のアドバイス</div><div id="bioAdv" style="font-size:12px;line-height:1.9;"></div></div>
+  <div class="card"><div class="card-ttl">家族のバイオリズム</div><div id="famBio"></div></div>
+</section>
+
+<section class="sec" id="sec-astro">
+  <div class="card"><div class="card-ttl">星座を選択</div><div id="signSel" style="display:flex;flex-wrap:wrap;"></div></div>
+  <div class="notice">吉久昌志：獅子座（7/23〜8/22）として設定済みです。</div>
+  <div class="card"><div class="card-ttl">12星座 — 今日の運勢</div><div id="signList"></div></div>
+</section>
+
+<section class="sec" id="sec-check">
+  <div class="chk-hdr">
+    <div><div class="chk-prog" id="chkProg">0/8</div><div class="chk-lbl">完了 / 全体</div></div>
+    <div style="text-align:right"><div style="font-family:'Shippori Mincho',serif;font-size:19px" id="chkStreak">🔥 0日</div><div class="chk-lbl">連続達成</div></div>
+  </div>
+  <div id="chkBody"></div>
+</section>
+
+<section class="sec" id="sec-nippo">
+  <div class="np-top">
+    <div class="np-sel-row">
+      <div class="np-sel-ttl">乗務日報</div>
+      <select class="np-date-sel" id="npSel" onchange="renderNippo()"></select>
+    </div>
+    <div class="np-3">
+      <div><div class="np-big" id="npSales" style="color:var(--gold)">-</div><div class="np-lbl">売上(税込)</div></div>
+      <div><div class="np-big" id="npRides" style="color:var(--blue)">-</div><div class="np-lbl">乗車回数</div></div>
+      <div><div class="np-big" id="npKm">-</div><div class="np-lbl">走行距離</div></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="mc" style="text-align:left;cursor:default;"><div class="mc-ttl">実車率</div><div style="font-family:'Shippori Mincho',serif;font-size:20px;color:var(--gold)" id="npJitsu">-</div><div style="height:4px;background:rgba(201,168,76,0.12);border-radius:2px;margin-top:5px;overflow:hidden"><div id="npJBar" style="height:100%;background:linear-gradient(90deg,var(--gold),#e8c46a);width:0%;transition:width 1s ease;border-radius:2px"></div></div></div>
+    <div class="mc" style="text-align:left;cursor:default;"><div class="mc-ttl">キロ当り収入</div><div style="font-family:'Shippori Mincho',serif;font-size:20px;color:var(--blue)" id="npKiro">-</div><div style="font-size:10px;color:var(--muted);margin-top:5px">円/km</div></div>
+    <div class="mc" style="text-align:left;cursor:default;"><div class="mc-ttl">乗務時間</div><div style="font-family:'Shippori Mincho',serif;font-size:20px" id="npHours">-</div><div style="font-size:10px;color:var(--muted);margin-top:5px" id="npRange">-</div></div>
+    <div class="mc" style="text-align:left;cursor:default;"><div class="mc-ttl">安全評価</div><div style="font-family:'Shippori Mincho',serif;font-size:20px" id="npScore">-</div><div style="font-size:10px;color:var(--muted);margin-top:5px" id="npGrade">-</div></div>
+  </div>
+  <div class="card"><div class="card-ttl">支払い内訳</div><div id="npPay"></div></div>
+  <div class="card"><div class="card-ttl">乗車履歴</div><div style="font-size:10px;color:var(--muted);margin-bottom:7px" id="npRideCount"></div><div id="npRides2" style="max-height:380px;overflow-y:auto;"></div></div>
+  <div class="card">
+    <div class="card-ttl">📸 日報写真から自動入力</div>
+    <div class="upload-zone" onclick="document.getElementById('nippoImg').click()">
+      <input type="file" id="nippoImg" accept="image/*">
+      <div class="upload-ico">📷</div>
+      <div class="upload-txt">1枚目（表面）をタップして選択<br><span style="font-size:10px">売上・走行データを自動読み取り</span></div>
+    </div>
+    <div class="upload-zone" onclick="document.getElementById('nippoImg2').click()" style="margin-top:0;">
+      <input type="file" id="nippoImg2" accept="image/*">
+      <div class="upload-ico">📷</div>
+      <div class="upload-txt">2枚目（裏面）をタップして選択（任意）<br><span style="font-size:10px">乗車履歴を自動読み取り</span></div>
+    </div>
+    <div class="ai-loading" id="nippoLoading">⏳ AIが日報を読み取り中...</div>
+    <div class="ai-result" id="nippoResult"></div>
+  </div>
+  <div class="card">
+    <div class="card-ttl">手動入力・更新</div>
+    <div class="form-row"><div class="form-group"><label class="form-lbl">乗務日</label><input type="date" class="form-inp" id="nDate"></div><div class="form-group"><label class="form-lbl">売上(税込)</label><input type="number" class="form-inp" id="nSales"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-lbl">乗車回数</label><input type="number" class="form-inp" id="nRides"></div><div class="form-group"><label class="form-lbl">走行距離(km)</label><input type="number" class="form-inp" id="nKm"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-lbl">実車率(%)</label><input type="number" class="form-inp" id="nJitsu"></div><div class="form-group"><label class="form-lbl">乗務時間</label><input type="text" class="form-inp" id="nHours" placeholder="20:03"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-lbl">出庫</label><input type="time" class="form-inp" id="nStart"></div><div class="form-group"><label class="form-lbl">入庫</label><input type="time" class="form-inp" id="nEnd"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-lbl">安全評価点</label><input type="number" class="form-inp" id="nScore"></div><div class="form-group"><label class="form-lbl">評価</label><select class="form-inp" id="nGrade"><option>S</option><option>A</option><option selected>B</option><option>C</option></select></div></div>
+    <div class="form-group"><label class="form-lbl">備考</label><input type="text" class="form-inp" id="nMemo" placeholder="特記事項など"></div>
+    <button class="btn-gold" onclick="saveNippo()">保存する</button>
+  </div>
+</section>
+
+<section class="sec" id="sec-monthly">
+  <div class="tab-sw">
+    <button class="ts-btn on" id="tsClose" onclick="setMonMode('close')">会社締め（15/16日）</button>
+    <button class="ts-btn" id="tsMonth" onclick="setMonMode('month')">月末まとめ</button>
+  </div>
+  <div id="monPeriodLabel" class="notice"></div>
+  <div class="card">
+    <div class="card-ttl">📋 出勤予定表から自動登録</div>
+    <div class="upload-zone" onclick="document.getElementById('schedImg').click()">
+      <input type="file" id="schedImg" accept="image/*">
+      <div class="upload-ico">📋</div>
+      <div class="upload-txt">出勤予定表の写真をタップして選択<br><span style="font-size:10px">AIが勤務日を読み取りカレンダーに反映します</span></div>
+    </div>
+    <div class="ai-loading" id="schedLoading">⏳ AIが予定表を読み取り中...</div>
+    <div class="ai-result" id="schedResult"></div>
+  </div>
+  <div class="sum-grid" id="monStats"></div>
+  <div class="card"><div class="card-ttl">日別売上グラフ</div><canvas id="monChart" style="width:100%;height:130px;margin-top:8px;"></canvas></div>
+  <div class="card"><div class="card-ttl">乗務日一覧</div><div id="monList"></div></div>
+  <div class="card">
+    <div class="card-ttl">設定</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">締め日</label><select class="form-inp" id="closeDay" onchange="renderMonthly()"><option value="15">15日</option><option value="16">16日</option></select></div>
+      <div class="form-group"><label class="form-lbl">表示月</label><input type="month" class="form-inp" id="monMonth" onchange="renderMonthly()"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<button class="fab" id="fab" onclick="openAdd()">＋</button>
+
+<div class="overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-ttl">予定を追加</div>
+    <div class="form-group"><label class="form-lbl">タイトル</label><input type="text" class="form-inp" id="evTitle" placeholder="例：出番・病院・記念日"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">日付</label><input type="date" class="form-inp" id="evDate"></div>
+      <div class="form-group"><label class="form-lbl">時間</label><input type="time" class="form-inp" id="evTime"></div>
+    </div>
+    <div class="form-group"><label class="form-lbl">メモ</label><input type="text" class="form-inp" id="evNote"></div>
+    <div class="form-group"><label class="form-lbl">カテゴリ</label>
+      <select class="form-inp" id="evCat"><option value="work">仕事</option><option value="personal">プライベート</option><option value="health">健康</option><option value="family">家族</option></select>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:14px;">
+      <button class="btn-sub" onclick="closeAdd()">キャンセル</button>
+      <button class="btn-gold" style="flex:1" onclick="addEvent()">追加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 定数・プロフィール
+// ============================================================
+var PROFILE_BIRTH = new Date(1961, 6, 27); // 1961-07-27
+var MY_SIGN = 'leo';
+var FAMILY = [
+  { name: 'ニンファ（妻）',  birth: new Date(1974, 11, 5),  rel: '妻' },
+  { name: '音夢（娘）',     birth: new Date(2002, 1, 16),  rel: '娘' },
+  { name: '礼（息子）',    birth: new Date(2005, 2, 9),   rel: '息子' }
+];
+var ANNIVERSARY = [{ label: '結婚記念日', month: 8, day: 4, year: 2001 }];
+
+var SIGNS = [
+  { id:'aries',      e:'♈', n:'牡羊座',   r:'3/21〜4/19',  kw:['情熱','行動力','勇気'] },
+  { id:'taurus',     e:'♉', n:'牡牛座',   r:'4/20〜5/20',  kw:['安定','忍耐','美食'] },
+  { id:'gemini',     e:'♊', n:'双子座',   r:'5/21〜6/21',  kw:['知性','柔軟','好奇心'] },
+  { id:'cancer',     e:'♋', n:'蟹座',     r:'6/22〜7/22',  kw:['感受性','家族','直感'] },
+  { id:'leo',        e:'♌', n:'獅子座',   r:'7/23〜8/22',  kw:['自信','創造','リーダー'] },
+  { id:'virgo',      e:'♍', n:'乙女座',   r:'8/23〜9/22',  kw:['分析','几帳面','謙虚'] },
+  { id:'libra',      e:'♎', n:'天秤座',   r:'9/23〜10/23', kw:['調和','美','判断力'] },
+  { id:'scorpio',    e:'♏', n:'蠍座',     r:'10/24〜11/22',kw:['探求','深さ','変容'] },
+  { id:'sagittarius',e:'♐', n:'射手座',   r:'11/23〜12/21',kw:['自由','哲学','冒険'] },
+  { id:'capricorn',  e:'♑', n:'山羊座',   r:'12/22〜1/19', kw:['責任','野心','克己'] },
+  { id:'aquarius',   e:'♒', n:'水瓶座',   r:'1/20〜2/18',  kw:['革新','独立','人道'] },
+  { id:'pisces',     e:'♓', n:'魚座',     r:'2/19〜3/20',  kw:['共感','直感','夢'] }
+];
+var DIRS  = ['北','北東','東','南東','南','南西','西','北西'];
+var COLORS = ['赤','橙','黄','緑','青','紺','紫','白','金','銀','桃','茶'];
+var ITEMS  = ['手帳','コーヒー','観葉植物','本','香水','財布','時計','花','音楽','写真'];
+var FMSG  = [
+  '穏やかなエネルギーが流れる一日。着実に進むことで思いがけない好機が訪れます。',
+  '直感が冴えわたる日。感じたことを大切に、新しいアイデアを積極的に試してください。',
+  '人との縁が強まる時期。積極的なコミュニケーションが運気を上昇させます。',
+  '内省に最適な日。じっくり考えることで本当に必要なものが見えてきます。',
+  '行動力が高まっています。計画していたことを実行に移す絶好のタイミングです。',
+  '金運上昇の兆し。賢い選択が将来の安定につながります。',
+  '創造性が開花する日。仕事でのアイデアが高く評価されます。'
+];
+var CHECKLIST = [
+  { cat:'朝のルーティン', items:[
+    { id:'wake', lbl:'起床時刻の記録' },
+    { id:'water', lbl:'水を飲む' },
+    { id:'fortune', lbl:'今日の運勢確認' }
+  ]},
+  { cat:'仕事・集中', items:[
+    { id:'tasks', lbl:'今日のタスクを3つ決める' },
+    { id:'email', lbl:'連絡チェック' }
+  ]},
+  { cat:'健康・リセット', items:[
+    { id:'exercise', lbl:'10分以上の運動' },
+    { id:'meal', lbl:'食事の記録' }
+  ]},
+  { cat:'夜のクローズ', items:[
+    { id:'review', lbl:'明日の準備・振り返り' }
+  ]}
+];
+var NIPPO_KEY   = 'nippoData_v3';
+var EVENTS_KEY  = 'events_v3';
+var CHECKS_KEY  = 'checks_v3';
+var WORKDAYS_KEY = 'workdays_v3';
+
+var PRESET_NIPPO = {
+  date:'2026-05-21', sales:73240, rides:35, km:226.0, jitsu:51.99, kiro:298.16,
+  hours:'20:03', start:'09:38', end:'04:41', score:85, grade:'B',
+  memo:'羽田空港便あり(ETC710円)',
+  payments:[
+    { label:'現金', count:12, amount:15000 },
+    { label:'クレジット', count:7, amount:28550 },
+    { label:'Suica', count:5, amount:5200 },
+    { label:'ID', count:1, amount:600 },
+    { label:'ネット決済', count:10, amount:24600 }
+  ],
+  rides_detail:[
+    { no:1,  from:'葛飾区奥戸3',    to:'葛飾区東新小岩4', km:0.4, fare:500 },
+    { no:3,  from:'葛飾区奥戸6',    to:'葛飾区新小岩1',   km:1.2, fare:1200 },
+    { no:4,  from:'江戸川区中央3',  to:'葛飾区四つ木4',   km:3.5, fare:2000 },
+    { no:6,  from:'葛飾区四つ木3',  to:'墨田区文花1',     km:2.1, fare:1700 },
+    { no:13, from:'中央区銀座2',    to:'中央区西新宿6',   km:8.2, fare:4900 },
+    { no:16, from:'千代田区丸の内2',to:'新宿区谷左内町',  km:5.4, fare:3600 },
+    { no:21, from:'千代田区富士見1',to:'新宿区高田馬場1', km:4.8, fare:3300 },
+    { no:22, from:'千代田区高田馬場4',to:'新宿区富ケ谷1',km:6.4, fare:4200 },
+    { no:27, from:'品川区大崎2',    to:'品川区大井1',     km:9.2, fare:6300 },
+    { no:28, from:'品川区大崎2',    to:'中野区本町3',     km:7.0, fare:4100 },
+    { no:30, from:'中野区本町3(迎)',to:'新宿区新宿3',     km:7.9, fare:5100 },
+    { no:33, from:'新宿区新宿3',    to:'豊島区上池袋4',   km:6.7, fare:3900 },
+    { no:35, from:'新宿区新宿3',    to:'中野区野方6',     km:8.4, fare:4900 }
+  ]
+};
+
+// ============================================================
+// 状態変数（localStorageから初期化）
+// ============================================================
+var TODAY = new Date();
+var mySign = localStorage.getItem('mySign') || MY_SIGN;
+var events = [];
+var checks = {};
+var streak = 0;
+var workdays = [];
+var calViewMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+var monMode = 'close';
+
+function loadState() {
+  try { events = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'); } catch(e) { events = []; }
+  try { checks = JSON.parse(localStorage.getItem(CHECKS_KEY) || '{}'); } catch(e) { checks = {}; }
+  try { streak = parseInt(localStorage.getItem('streak') || '0') || 0; } catch(e) { streak = 0; }
+  try { workdays = JSON.parse(localStorage.getItem(WORKDAYS_KEY) || '[]'); } catch(e) { workdays = []; }
+}
+
+function nippoData() {
+  var d = [];
+  try { d = JSON.parse(localStorage.getItem(NIPPO_KEY) || '[]'); } catch(e) { d = []; }
+  var found = false;
+  for (var i = 0; i < d.length; i++) { if (d[i].date === PRESET_NIPPO.date) { found = true; break; } }
+  if (!found) { d.unshift(PRESET_NIPPO); localStorage.setItem(NIPPO_KEY, JSON.stringify(d)); }
+  return d;
+}
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+function sv(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function hashDay(d) {
+  var n = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  return Math.abs((n * 1234567 + 89) % 100);
+}
+
+function ds(d) {
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+function todayStr() { return ds(TODAY); }
+
+function bioVal(birth, day, period) {
+  var days = Math.floor((day - birth) / 86400000);
+  return Math.sin(2 * Math.PI * days / period);
+}
+
+function bioSt(v) {
+  if (Math.abs(v) < 0.12) return '転換期';
+  if (v > 0.7) return '絶好調';
+  if (v > 0.3) return '好調';
+  if (v < -0.7) return '要注意';
+  if (v < -0.3) return '低調';
+  return '普通';
+}
+
+function bioFmt(v) {
+  var pct = Math.round(v * 100);
+  return (pct >= 0 ? '+' : '') + pct + '%';
+}
+
+function starsStr(score) {
+  var n = Math.round(score / 20);
+  if (n < 1) n = 1;
+  if (n > 5) n = 5;
+  var s = '';
+  for (var i = 0; i < n; i++) s += '★';
+  for (var j = n; j < 5; j++) s += '☆';
+  return s;
+}
+
+function el(id) { return document.getElementById(id); }
+
+// ============================================================
+// ヘッダー
+// ============================================================
+function renderHeader() {
+  var wd = ['日','月','火','水','木','金','土'];
+  var ry = ['大安','赤口','先勝','友引','先負','仏滅'];
+  var doy = Math.floor((TODAY - new Date(TODAY.getFullYear(), 0, 1)) / 86400000);
+  var idx = doy % 6;
+  el('hdrDate').textContent = TODAY.getFullYear() + '年' + (TODAY.getMonth()+1) + '月' + TODAY.getDate() + '日（' + wd[TODAY.getDay()] + '）';
+  el('hdrSub').textContent = ry[idx] + '　大丸交通 葛飾510あ1508';
+  el('scoreNum').textContent = Math.floor(40 + hashDay(TODAY) * 0.6);
+}
+
+// ============================================================
+// 運勢
+// ============================================================
+function renderFortune() {
+  var s = hashDay(TODAY);
+  var items = [
+    { lbl:'総合', v: 40 + (s * 7) % 60 },
+    { lbl:'恋愛', v: 30 + (s * 11) % 70 },
+    { lbl:'仕事', v: 35 + (s * 13) % 65 },
+    { lbl:'金運', v: 25 + (s * 17) % 75 },
+    { lbl:'健康', v: 45 + (s * 5) % 55 }
+  ];
+  var h = '';
+  for (var i = 0; i < items.length; i++) {
+    var v = Math.min(100, Math.max(0, items[i].v));
+    var stars = starsStr(v);
+    h += '<div class="frow">';
+    h += '<span class="flbl">' + items[i].lbl + '</span>';
+    h += '<div class="fbar"><div class="ffill" style="width:0%" data-w="' + v + '%"></div></div>';
+    h += '<span class="fval">' + stars + '</span>';
+    h += '</div>';
+  }
+  el('fortuneRows').innerHTML = h;
+  el('fortuneMsg').textContent = FMSG[s % FMSG.length];
+  setTimeout(function() {
+    var fills = document.querySelectorAll('.ffill');
+    for (var i = 0; i < fills.length; i++) {
+      fills[i].style.width = fills[i].getAttribute('data-w');
+    }
+  }, 200);
+}
+
+// ============================================================
+// 開運情報・コンパス
+// ============================================================
+function renderLucky() {
+  var s = hashDay(TODAY);
+  var dir = DIRS[s % 8];
+  el('lDir').textContent = dir;
+  el('lCol').textContent = COLORS[s % COLORS.length];
+  el('lNum').textContent = (s % 9) + 1;
+  el('lItm').textContent = ITEMS[s % ITEMS.length];
+  var amap = { '北':0,'北東':45,'東':90,'南東':135,'南':180,'南西':225,'西':270,'北西':315 };
+  var ang = amap[dir] || 0;
+  var cx = 50, cy = 50, r = 42;
+  var a1 = (ang - 22.5 - 90) * Math.PI / 180;
+  var a2 = (ang + 22.5 - 90) * Math.PI / 180;
+  var x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+  var x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+  el('cArc').setAttribute('d', 'M' + cx + ',' + cy + ' L' + x1 + ',' + y1 + ' A' + r + ',' + r + ' 0 0,1 ' + x2 + ',' + y2 + ' Z');
+  el('cNeedle').setAttribute('transform', 'rotate(' + ang + ',50,50)');
+}
+
+// ============================================================
+// 家族・記念日
+// ============================================================
+function renderFamilyToday() {
+  var m = TODAY.getMonth() + 1, d = TODAY.getDate();
+  var items = [];
+  for (var i = 0; i < FAMILY.length; i++) {
+    var f = FAMILY[i];
+    if (f.birth.getMonth() + 1 === m && f.birth.getDate() === d) {
+      var age = TODAY.getFullYear() - f.birth.getFullYear();
+      items.push('🎂 <b>' + f.name + '</b> 誕生日！ ' + age + '歳');
+    }
+  }
+  for (var j = 0; j < ANNIVERSARY.length; j++) {
+    var a = ANNIVERSARY[j];
+    if (a.month === m && a.day === d) {
+      var yrs = TODAY.getFullYear() - a.year;
+      items.push('💍 <b>' + a.label + '</b> ' + yrs + '周年');
+    }
+  }
+  var container = el('familyToday');
+  if (items.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;text-align:center">本日の記念日はありません</div>';
+  } else {
+    var h = '';
+    for (var k = 0; k < items.length; k++) {
+      h += '<div style="font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);">' + items[k] + '</div>';
+    }
+    container.innerHTML = h;
+  }
+}
+
+function ensureFamilyEvents() {
+  var yr = TODAY.getFullYear();
+  for (var i = 0; i < FAMILY.length; i++) {
+    var f = FAMILY[i];
+    var dateKey = yr + '-' + String(f.birth.getMonth()+1).padStart(2,'0') + '-' + String(f.birth.getDate()).padStart(2,'0');
+    var id = 'fam_' + i + '_' + yr;
+    var found = false;
+    for (var j = 0; j < events.length; j++) { if (events[j].id === id) { found = true; break; } }
+    if (!found) {
+      events.push({ id:id, title:'🎂 ' + f.name + ' 誕生日', date:dateKey, time:'', note:(yr - f.birth.getFullYear()) + '歳', category:'family' });
+    }
+  }
+  for (var k = 0; k < ANNIVERSARY.length; k++) {
+    var an = ANNIVERSARY[k];
+    var aDateKey = yr + '-' + String(an.month).padStart(2,'0') + '-' + String(an.day).padStart(2,'0');
+    var aId = 'ann_' + k + '_' + yr;
+    var aFound = false;
+    for (var l = 0; l < events.length; l++) { if (events[l].id === aId) { aFound = true; break; } }
+    if (!aFound) {
+      var yrs2 = yr - an.year;
+      events.push({ id:aId, title:'💍 ' + an.label, date:aDateKey, time:'', note:yrs2 + '周年', category:'family' });
+    }
+  }
+  sv(EVENTS_KEY, events);
+}
+
+// ============================================================
+// カレンダー
+// ============================================================
+function renderCalendar() {
+  var y = calViewMonth.getFullYear(), m = calViewMonth.getMonth();
+  el('calTtl').textContent = y + '年' + (m+1) + '月';
+  var days = ['日','月','火','水','木','金','土'];
+  var hdrEl = el('calHdr');
+  hdrEl.innerHTML = '';
+  for (var d = 0; d < 7; d++) {
+    var dh = document.createElement('div');
+    dh.className = 'cdh';
+    dh.textContent = days[d];
+    if (d === 0) dh.style.color = 'var(--red)';
+    if (d === 6) dh.style.color = 'var(--blue)';
+    hdrEl.appendChild(dh);
+  }
+  var grid = el('calGrid');
+  grid.innerHTML = '';
+  var first = new Date(y, m, 1).getDay();
+  var dim = new Date(y, m+1, 0).getDate();
+  var prev = new Date(y, m, 0).getDate();
+  var tStr = todayStr();
+  for (var i = first - 1; i >= 0; i--) {
+    var pd = document.createElement('div'); pd.className = 'cd om'; pd.textContent = prev - i; grid.appendChild(pd);
+  }
+  for (var day = 1; day <= dim; day++) {
+    var dt = new Date(y, m, day);
+    var dow = dt.getDay();
+    var dstr = ds(dt);
+    var isToday = dstr === tStr;
+    var isWork = workdays.indexOf(dstr) >= 0;
+    var cls = 'cd';
+    if (dow === 0) cls += ' sun';
+    else if (dow === 6) cls += ' sat';
+    if (isToday) cls += ' today';
+    else if (isWork) cls += ' workday';
+    var cell = document.createElement('div');
+    cell.className = cls;
+    cell.innerHTML = '<span>' + day + '</span>';
+    var hasEv = false;
+    for (var e = 0; e < events.length; e++) { if (events[e].date === dstr) { hasEv = true; break; } }
+    if (hasEv) { var dot = document.createElement('div'); dot.className = 'cd-dot'; cell.appendChild(dot); }
+    (function(dstrCopy) {
+      cell.onclick = function() { el('evDate').value = dstrCopy; openAdd(); };
+    })(dstr);
+    grid.appendChild(cell);
+  }
+  var tot = first + dim;
+  var rem = tot % 7 === 0 ? 0 : 7 - tot % 7;
+  for (var r = 1; r <= rem; r++) {
+    var rd = document.createElement('div'); rd.className = 'cd om'; rd.textContent = r; grid.appendChild(rd);
+  }
+}
+
+function chMon(delta) {
+  calViewMonth = new Date(calViewMonth.getFullYear(), calViewMonth.getMonth() + delta, 1);
+  renderCalendar();
+}
+
+// ============================================================
+// スケジュール
+// ============================================================
+function renderSchedule() {
+  var container = el('schList');
+  if (!events.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">予定はありません<br>カレンダーの日付をタップで追加</div>';
+    return;
+  }
+  var wd = ['日','月','火','水','木','金','土'];
+  var sorted = events.slice().sort(function(a,b){ return (a.date+a.time) > (b.date+b.time) ? 1 : -1; });
+  var grouped = {};
+  for (var i = 0; i < sorted.length; i++) {
+    var ev = sorted[i];
+    if (!grouped[ev.date]) grouped[ev.date] = [];
+    grouped[ev.date].push(ev);
+  }
+  var tStr = todayStr();
+  var tmrDate = new Date(TODAY.getTime() + 86400000);
+  var tmrStr = ds(tmrDate);
+  var h = '';
+  var dates = Object.keys(grouped).sort();
+  for (var di = 0; di < dates.length; di++) {
+    var date = dates[di];
+    var dt2 = new Date(date + 'T00:00:00');
+    var lbl = date === tStr ? '今日' : date === tmrStr ? '明日' : '';
+    h += '<div style="margin-bottom:13px"><div style="font-size:9px;color:var(--muted);letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:7px">';
+    h += (dt2.getMonth()+1) + '/' + dt2.getDate() + '(' + wd[dt2.getDay()] + ')';
+    if (lbl) h += ' <span style="color:var(--gold);font-size:10px">' + lbl + '</span>';
+    h += '</div>';
+    var evs = grouped[date];
+    for (var ei = 0; ei < evs.length; ei++) {
+      var ev2 = evs[ei];
+      var tc = { work:'tag-work', personal:'tag-personal', health:'tag-health', family:'tag-family' }[ev2.category] || 'tag-work';
+      var tl = { work:'仕事', personal:'プライベート', health:'健康', family:'家族' }[ev2.category] || '仕事';
+      h += '<div class="sch-item"><div class="sch-time">' + (ev2.time || '終日') + '</div>';
+      h += '<div class="sch-body"><div class="sch-ttl">' + ev2.title + '</div>';
+      if (ev2.note) h += '<div class="sch-det">' + ev2.note + '</div>';
+      h += '<span class="tag ' + tc + '">' + tl + '</span></div></div>';
+    }
+    h += '</div>';
+  }
+  container.innerHTML = h;
+}
+
+function renderTodaySch() {
+  var tStr = todayStr();
+  var evs = [];
+  for (var i = 0; i < events.length; i++) { if (events[i].date === tStr) evs.push(events[i]); }
+  evs.sort(function(a,b){ return a.time > b.time ? 1 : -1; });
+  var container = el('todaySch');
+  if (!evs.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px">今日の予定はありません</div>';
+    return;
+  }
+  var h = '';
+  for (var j = 0; j < evs.length; j++) {
+    var ev = evs[j];
+    h += '<div class="sch-item"><div class="sch-time">' + (ev.time || '終日') + '</div>';
+    h += '<div class="sch-body"><div class="sch-ttl">' + ev.title + '</div>';
+    if (ev.note) h += '<div class="sch-det">' + ev.note + '</div>';
+    h += '</div></div>';
+  }
+  container.innerHTML = h;
+}
+
+function openAdd()  { el('addModal').classList.add('open'); }
+function closeAdd() { el('addModal').classList.remove('open'); }
+
+function addEvent() {
+  var title = el('evTitle').value.trim();
+  var date  = el('evDate').value;
+  if (!title || !date) return;
+  events.push({ id: String(Date.now()), title:title, date:date, time:el('evTime').value, note:el('evNote').value, category:el('evCat').value });
+  sv(EVENTS_KEY, events);
+  el('evTitle').value = ''; el('evNote').value = '';
+  closeAdd(); renderCalendar(); renderSchedule(); renderTodaySch();
+}
+
+// ============================================================
+// バイオリズム
+// ============================================================
+function renderBio() {
+  drawBioChart();
+  var ph    = bioVal(PROFILE_BIRTH, TODAY, 23);
+  var em    = bioVal(PROFILE_BIRTH, TODAY, 28);
+  var intel = bioVal(PROFILE_BIRTH, TODAY, 33);
+  el('bPh').textContent  = bioFmt(ph);    el('bPhS').textContent = bioSt(ph);
+  el('bEm').textContent  = bioFmt(em);    el('bEmS').textContent = bioSt(em);
+  el('bIn').textContent  = bioFmt(intel); el('bInS').textContent = bioSt(intel);
+  el('bioQ').textContent = Math.round(ph*100) + '/' + Math.round(em*100) + '/' + Math.round(intel*100);
+  var adv = [];
+  if (ph < -0.3)      adv.push('身体は低調期。無理な運動は避け十分な休息を。');
+  else if (ph > 0.5)  adv.push('身体絶好調！運動や体力仕事に最適な日。');
+  if (em < -0.3)      adv.push('感情が揺れやすい時期。重要な決断は後日に。');
+  else if (em > 0.5)  adv.push('感情リズム高め。コミュニケーションに積極的に。');
+  if (intel < -0.3)   adv.push('知的活動は低調。大局的な思考を優先して。');
+  else if (intel > 0.5) adv.push('知性リズム高峰！企画・学習に絶好のタイミング。');
+  el('bioAdv').textContent = adv.length ? adv.join('　') : 'バランスのとれた良い状態です。積極的に動きましょう。';
+  var famH = '';
+  for (var i = 0; i < FAMILY.length; i++) {
+    var f = FAMILY[i];
+    var fp = bioVal(f.birth, TODAY, 23);
+    var fe = bioVal(f.birth, TODAY, 28);
+    var fi = bioVal(f.birth, TODAY, 33);
+    famH += '<div style="padding:10px 0;border-bottom:1px solid var(--border);">';
+    famH += '<div style="font-size:12px;font-weight:700;margin-bottom:6px">' + f.name + '</div>';
+    famH += '<div style="display:flex;gap:14px;font-size:11px;">';
+    famH += '<span style="color:#e74c3c">💪 ' + bioFmt(fp) + '</span>';
+    famH += '<span style="color:#3498db">💙 ' + bioFmt(fe) + '</span>';
+    famH += '<span style="color:#f39c12">🧠 ' + bioFmt(fi) + '</span>';
+    famH += '</div></div>';
+  }
+  el('famBio').innerHTML = famH;
+}
+
+function drawBioChart() {
+  var cv = el('bioCv');
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.offsetWidth, H = cv.offsetHeight;
+  if (!W || !H) return;
+  cv.width = W * dpr; cv.height = H * dpr;
+  var ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var birth = PROFILE_BIRTH;
+  var start = new Date(TODAY.getTime() - 14 * 86400000);
+  var days = 28, dw = W / days;
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(201,168,76,0.07)';
+  for (var gi = 0; gi <= days; gi++) { ctx.beginPath(); ctx.moveTo(gi*dw, 0); ctx.lineTo(gi*dw, H); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(201,168,76,0.45)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(14*dw, 0); ctx.lineTo(14*dw, H); ctx.stroke();
+  ctx.setLineDash([]);
+  var waves = [
+    { p:23, c:'#e74c3c', w:2 }, { p:28, c:'#3498db', w:2 },
+    { p:33, c:'#f39c12', w:2 }, { p:38, c:'#9b59b6', w:1.5 }
+  ];
+  for (var wi = 0; wi < waves.length; wi++) {
+    var wv = waves[wi];
+    ctx.strokeStyle = wv.c; ctx.lineWidth = wv.w; ctx.beginPath();
+    for (var pi = 0; pi <= days * 4; pi++) {
+      var frac = pi / 4;
+      var d = new Date(start.getTime() + frac * 86400000);
+      var v = bioVal(birth, d, wv.p);
+      var x = frac * dw, y = H/2 - v * (H/2 - 8);
+      if (pi === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'var(--gold)'; ctx.beginPath(); ctx.arc(14*dw, H/2, 3, 0, Math.PI*2); ctx.fill();
+}
+
+// ============================================================
+// 占星術
+// ============================================================
+function signFortune(id) {
+  var s = hashDay(TODAY);
+  var idx = 0;
+  for (var i = 0; i < SIGNS.length; i++) { if (SIGNS[i].id === id) { idx = i; break; } }
+  var seed = (s + idx * 31) % 100;
+  return { total: 40 + seed % 60 };
+}
+
+function renderAstro() {
+  var selEl = el('signSel');
+  selEl.innerHTML = '';
+  for (var i = 0; i < SIGNS.length; i++) {
+    var s = SIGNS[i];
+    var btn = document.createElement('button');
+    btn.className = 'sign-btn' + (s.id === mySign ? ' on' : '');
+    btn.textContent = s.e + ' ' + s.n;
+    (function(sid) { btn.onclick = function() { mySign = sid; localStorage.setItem('mySign', sid); renderAstro(); syncSign(); }; })(s.id);
+    selEl.appendChild(btn);
+  }
+  var listEl = el('signList');
+  var h = '';
+  for (var j = 0; j < SIGNS.length; j++) {
+    var sg = SIGNS[j];
+    var f = signFortune(sg.id);
+    var stars = starsStr(f.total);
+    var isMe = sg.id === mySign;
+    h += '<div class="sign-row" onclick="toggleDetail(\'' + sg.id + '\')">';
+    h += '<span style="font-size:21px">' + sg.e + '</span>';
+    h += '<div style="flex:1"><div style="font-family:\'Shippori Mincho\',serif;font-size:13px' + (isMe ? ';color:var(--gold)' : '') + '">' + sg.n + (isMe ? ' ✦' : '') + '</div>';
+    h += '<div style="font-size:9px;color:var(--muted)">' + sg.r + '</div></div>';
+    h += '<div style="text-align:right"><div style="font-size:12px;color:var(--gold)">' + stars + '</div><div style="font-size:10px;color:var(--muted)">' + f.total + '点</div></div>';
+    h += '</div>';
+    h += '<div id="sd-' + sg.id + '" class="sign-detail">';
+    var msgMap = { leo:'リーダーシップを発揮する好機。自信と熱意が周囲を動かします。', aries:'直感を信じて前進しましょう。', taurus:'落ち着いた判断力が冴える日。', gemini:'情報収集と発信の日。', cancer:'大切な人との時間を優先して。', virgo:'細部への注意力が冴えわたる日。', libra:'相手の立場に立つことでwin-winな関係が築けます。', scorpio:'本質を見極めることで道が開けます。', sagittarius:'視野を広げる日。', capricorn:'地道な努力が大きな成果につながります。', aquarius:'革新的なアイデアを大切に。', pisces:'直感とインスピレーションの日。' };
+    h += '<div style="font-size:12px;line-height:1.8;margin-bottom:8px">' + (msgMap[sg.id] || 'あなたの星がガイドします。') + '</div>';
+    h += '<div class="kw-list">';
+    for (var ki = 0; ki < sg.kw.length; ki++) h += '<span class="kw">' + sg.kw[ki] + '</span>';
+    h += '</div></div>';
+  }
+  listEl.innerHTML = h;
+}
+
+function toggleDetail(id) { el('sd-' + id).classList.toggle('open'); }
+
+function syncSign() {
+  var sign = null;
+  for (var i = 0; i < SIGNS.length; i++) { if (SIGNS[i].id === mySign) { sign = SIGNS[i]; break; } }
+  if (sign) el('mySignIco').textContent = sign.e;
+  el('astroQ').textContent = starsStr(signFortune(mySign).total);
+}
+
+// ============================================================
+// チェックリスト
+// ============================================================
+function renderCheck() {
+  var tStr = todayStr();
+  if (!checks[tStr]) checks[tStr] = {};
+  var tc = checks[tStr];
+  var total = 0, done = 0, h = '';
+  for (var ci = 0; ci < CHECKLIST.length; ci++) {
+    var cat = CHECKLIST[ci];
+    h += '<div style="margin-bottom:13px"><div class="chk-cat-ttl">' + cat.cat + '</div>';
+    for (var ii = 0; ii < cat.items.length; ii++) {
+      var item = cat.items[ii];
+      total++;
+      var isDone = !!tc[item.id];
+      if (isDone) done++;
+      h += '<div class="chk-item' + (isDone ? ' done' : '') + '" onclick="toggleCheck(\'' + item.id + '\')">';
+      h += '<div class="chk-circle">' + (isDone ? '✓' : '') + '</div>';
+      h += '<div class="chk-lbl2">' + item.lbl + '</div>';
+      if (isDone && tc[item.id + '_t']) h += '<div class="chk-time2">' + tc[item.id + '_t'] + '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  el('chkBody').innerHTML = h;
+  el('chkProg').textContent = done + '/' + total;
+  el('checkQ').textContent  = done + '/' + total;
+  el('chkStreak').textContent = '🔥 ' + streak + '日';
+}
+
+function toggleCheck(id) {
+  var tStr = todayStr();
+  if (!checks[tStr]) checks[tStr] = {};
+  var now = new Date();
+  var t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  if (checks[tStr][id]) { delete checks[tStr][id]; delete checks[tStr][id + '_t']; }
+  else { checks[tStr][id] = true; checks[tStr][id + '_t'] = t; }
+  sv(CHECKS_KEY, checks);
+  renderCheck();
+}
+
+// ============================================================
+// 日報
+// ============================================================
+function renderNippoQuick() {
+  var data = nippoData();
+  if (!data.length) return;
+  var rec = data[0];
+  el('lastSales').textContent = rec.sales ? rec.sales.toLocaleString() + '円' : '-';
+  el('lastDate').textContent  = rec.date ? rec.date.slice(5).replace('-', '/') : '-';
+}
+
+function renderNippo() {
+  var data = nippoData();
+  var selEl = el('npSel');
+  var wd = ['日','月','火','水','木','金','土'];
+  // 現在の選択値を保存
+  var currentVal = selEl.value;
+  var opts = '';
+  for (var i = 0; i < data.length; i++) {
+    var dt = new Date(data[i].date + 'T00:00:00');
+    opts += '<option value="' + data[i].date + '">' + data[i].date.slice(5).replace('-','/') + '(' + wd[dt.getDay()] + ')</option>';
+  }
+  selEl.innerHTML = opts;
+  // 以前の選択値を復元
+  if (currentVal) selEl.value = currentVal;
+  var rec = null;
+  for (var j = 0; j < data.length; j++) { if (data[j].date === selEl.value) { rec = data[j]; break; } }
+  if (!rec) rec = data[0];
+  if (!rec) return;
+  selEl.value = rec.date;
+  el('npSales').textContent  = rec.sales ? rec.sales.toLocaleString() + '円' : '-';
+  el('npRides').textContent  = rec.rides ? rec.rides + '回' : '-';
+  el('npKm').textContent     = rec.km ? rec.km + 'km' : '-';
+  el('npJitsu').textContent  = rec.jitsu ? rec.jitsu + '%' : '-';
+  el('npKiro').textContent   = rec.kiro || '-';
+  el('npHours').textContent  = rec.hours || '-';
+  el('npRange').textContent  = (rec.start && rec.end) ? rec.start + '→' + rec.end : '-';
+  el('npScore').textContent  = rec.score ? rec.score + '点' : '-';
+  el('npGrade').textContent  = rec.grade ? '評価 ' + rec.grade : '-';
+  setTimeout(function() { el('npJBar').style.width = (rec.jitsu || 0) + '%'; }, 200);
+  // 支払い
+  var payEl = el('npPay'), payH = '';
+  if (rec.payments && rec.payments.length) {
+    for (var pi = 0; pi < rec.payments.length; pi++) {
+      var p = rec.payments[pi];
+      payH += '<div class="pay-row"><span style="font-size:12px;color:var(--muted)">' + p.label + ' <span style="font-size:10px">' + p.count + '回</span></span><span style="font-family:\'Shippori Mincho\',serif;font-size:14px">' + p.amount.toLocaleString() + '円</span></div>';
+    }
+    payH += '<div class="pay-row" style="font-weight:700"><span style="font-size:12px">合計</span><span style="font-family:\'Shippori Mincho\',serif;font-size:15px;color:var(--gold)">' + rec.sales.toLocaleString() + '円</span></div>';
+  } else { payH = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px">データなし</div>'; }
+  payEl.innerHTML = payH;
+  // 乗車履歴
+  var r2El = el('npRides2'), rcEl = el('npRideCount'), rideH = '';
+  if (rec.rides_detail && rec.rides_detail.length) {
+    var valid = [];
+    for (var ri = 0; ri < rec.rides_detail.length; ri++) { if (rec.rides_detail[ri].fare > 0) valid.push(rec.rides_detail[ri]); }
+    var total = 0; for (var ti = 0; ti < valid.length; ti++) total += valid[ti].fare;
+    rcEl.textContent = valid.length + '件 / 総運賃 ' + total.toLocaleString() + '円';
+    for (var vi = 0; vi < valid.length; vi++) {
+      var ride = valid[vi];
+      rideH += '<div style="padding:8px 0;border-bottom:1px solid rgba(201,168,76,0.07);display:flex;gap:7px;align-items:flex-start;">';
+      rideH += '<span style="font-size:10px;color:var(--muted);flex:none;width:18px;text-align:right">' + ride.no + '</span>';
+      rideH += '<div style="flex:1;min-width:0"><div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ride.from + '</div><div style="font-size:10px;color:var(--muted)">→ ' + ride.to + '</div></div>';
+      rideH += '<div style="text-align:right;flex:none"><div style="font-family:\'Shippori Mincho\',serif;font-size:12px">' + ride.fare.toLocaleString() + '円</div><div style="font-size:10px;color:var(--muted)">' + ride.km + 'km</div></div>';
+      rideH += '</div>';
+    }
+  } else { rcEl.textContent = ''; rideH = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px">乗車データなし</div>'; }
+  r2El.innerHTML = rideH;
+  // フォーム
+  el('nDate').value  = rec.date;  el('nSales').value = rec.sales || '';
+  el('nRides').value = rec.rides || ''; el('nKm').value = rec.km || '';
+  el('nJitsu').value = rec.jitsu || ''; el('nHours').value = rec.hours || '';
+  el('nStart').value = rec.start || ''; el('nEnd').value = rec.end || '';
+  el('nScore').value = rec.score || ''; el('nGrade').value = rec.grade || 'B';
+  el('nMemo').value  = rec.memo || '';
+}
+
+function saveNippo() {
+  var date = el('nDate').value;
+  if (!date) { alert('乗務日を入力してください'); return; }
+  var sales = parseInt(el('nSales').value) || 0;
+  var km    = parseFloat(el('nKm').value) || 0;
+  var rides2 = [];
+  try { rides2 = JSON.parse(localStorage.getItem('nippoRides2') || '[]'); } catch(e) { rides2 = []; }
+  var entry = {
+    date:date, sales:sales, rides:parseInt(el('nRides').value)||0, km:km,
+    jitsu:parseFloat(el('nJitsu').value)||0,
+    kiro: km > 0 ? Math.round(sales/km*100)/100 : 0,
+    hours:el('nHours').value, start:el('nStart').value, end:el('nEnd').value,
+    score:parseInt(el('nScore').value)||0, grade:el('nGrade').value,
+    memo:el('nMemo').value, payments:[], rides_detail: rides2
+  };
+  localStorage.removeItem('nippoRides2');
+  var data = nippoData();
+  var idx = -1;
+  for (var i = 0; i < data.length; i++) { if (data[i].date === date) { idx = i; break; } }
+  if (idx >= 0) data[idx] = entry; else data.push(entry);
+  data.sort(function(a,b){ return a.date > b.date ? -1 : 1; });
+  sv(NIPPO_KEY, data);
+  renderNippo(); renderNippoQuick(); renderMonthly();
+  alert('保存しました！');
+}
+
+// ============================================================
+// 日報写真AI読み取り
+// ============================================================
+// ============================================================
+// APIキー管理
+// ============================================================
+var API_KEY_STORAGE = 'anthropic_api_key';
+
+function getApiKey() {
+  return localStorage.getItem(API_KEY_STORAGE) || '';
+}
+
+function saveApiKey() {
+  var key = el('apiKeyInp').value.trim();
+  if (!key || key.indexOf('sk-ant-') !== 0) {
+    alert('正しいAPIキーを入力してください（sk-ant-で始まります）');
+    return;
+  }
+  localStorage.setItem(API_KEY_STORAGE, key);
+  el('apiSetup').classList.add('hide');
+}
+
+function checkApiKey() {
+  var key = getApiKey();
+  if (!key) {
+    el('apiSetup').classList.remove('hide');
+  } else {
+    el('apiSetup').classList.add('hide');
+  }
+}
+
+function resetApiKey() {
+  if (!confirm('APIキーをリセットしますか？')) return;
+  localStorage.removeItem(API_KEY_STORAGE);
+  el('apiKeyInp').value = '';
+  el('apiSetup').classList.remove('hide');
+}
+
+// ============================================================
+// 日報写真AI読み取り
+// ============================================================
+function callApi(imageData, mediaType, promptText, onSuccess, onError) {
+  var key = getApiKey();
+  if (!key) { checkApiKey(); return; }
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageData } },
+        { type: 'text', text: promptText }
+      ]}]
+    })
+  }).then(function(res) {
+    var status = res.status;
+    return res.text().then(function(txt) {
+      try {
+        var json = JSON.parse(txt);
+        json._status = status;
+        return json;
+      } catch(e) {
+        throw new Error('HTTP ' + status + ' / JSONでない応答: ' + txt.slice(0,150));
+      }
+    });
+  }).then(function(json) {
+    if (json.error) throw new Error('HTTP' + json._status + ' / ' + json.error.type + ': ' + json.error.message);
+    if (!json.content || !json.content.length) throw new Error('空レスポンス: ' + JSON.stringify(json).slice(0,120));
+    var text = '';
+    for (var i = 0; i < json.content.length; i++) {
+      if (json.content[i].type === 'text') text += json.content[i].text || '';
+    }
+    var jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSONが見つかりません');
+    onSuccess(JSON.parse(jsonMatch[0]));
+  }).catch(function(err) {
+    onError(err.message);
+  });
+}
+
+function readNippoPhoto(input, isPage2) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    el('nippoLoading').classList.add('show');
+    el('nippoResult').classList.remove('show');
+    var prompt = isPage2
+      ? '大丸交通乗務員日報2ページ目から乗車履歴を読み取りJSONのみ返してください。{"rides_detail":[{"no":番号,"from":"乗車地","to":"降車地","km":数値,"fare":数値}]}'
+      : '大丸交通乗務員日報（1ページ目）から正確に数値を読み取りJSONのみ返してください。注意：ridesは乗車回数（通常20〜50回程度）、kmは乗務走行距離（通常100〜300km程度）です。指数欄や累計欄の数値は使わないでください。{"date":"YYYY-MM-DD","sales":売上税込数値,"rides":乗車回数,"km":乗務走行距離km,"jitsu":実車率パーセント,"kiro":キロ当り収入,"hours":"乗務時間HH:MM","start":"出庫時刻HH:MM","end":"入庫時刻HH:MM","score":安全評価点数,"grade":"評価アルファベット","memo":"特記事項"}';
+    callApi(b64, file.type, prompt, function(parsed) {
+      if (isPage2) {
+        localStorage.setItem('nippoRides2', JSON.stringify(parsed.rides_detail || []));
+        el('nippoResult').innerHTML = '<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px">✅ 2枚目読み取り完了！</div><div style="font-size:11px;color:var(--muted)">乗車履歴 ' + (parsed.rides_detail||[]).length + '件。「保存する」を押してください。</div>';
+      } else {
+        if (parsed.date)  el('nDate').value  = parsed.date;
+        if (parsed.sales) el('nSales').value = parsed.sales;
+        if (parsed.rides) el('nRides').value = parsed.rides;
+        if (parsed.km)    el('nKm').value    = parsed.km;
+        if (parsed.jitsu) el('nJitsu').value = parsed.jitsu;
+        if (parsed.hours) el('nHours').value = parsed.hours;
+        if (parsed.start) el('nStart').value = parsed.start;
+        if (parsed.end)   el('nEnd').value   = parsed.end;
+        if (parsed.score) el('nScore').value = parsed.score;
+        if (parsed.grade) el('nGrade').value = parsed.grade;
+        if (parsed.memo)  el('nMemo').value  = parsed.memo;
+        el('nippoResult').innerHTML =
+          '<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px">✅ 読み取り完了！確認して保存してください。</div>' +
+          '<div style="font-size:11px;color:var(--muted);line-height:1.9">' +
+          '乗務日：' + (parsed.date||'-') + '<br>' +
+          '売上：' + (parsed.sales ? Number(parsed.sales).toLocaleString()+'円':'-') + '<br>' +
+          '乗車：' + (parsed.rides||'-') + '回 / ' + (parsed.km||'-') + 'km<br>' +
+          '実車率：' + (parsed.jitsu||'-') + '% / 評価：' + (parsed.score||'-') + '点 ' + (parsed.grade||'-') +
+          '</div>';
+      }
+      el('nippoResult').classList.add('show');
+      el('nippoLoading').classList.remove('show');
+    }, function(errMsg) {
+      el('nippoResult').innerHTML = '<div style="font-size:11px;color:var(--red)">⚠ エラー：' + errMsg + '</div>';
+      el('nippoResult').classList.add('show');
+      el('nippoLoading').classList.remove('show');
+    });
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function readSchedPhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    el('schedLoading').classList.add('show');
+    el('schedResult').classList.remove('show');
+    var prompt = '大丸交通出勤予定表から吉久昌志（20001902）の出勤日を読み取りJSONのみ返してください。{"year":数値,"month":数値,"work_dates":["YYYY-MM-DD"],"close_day":15}';
+    callApi(b64, file.type, prompt, function(parsed) {
+      var wdArr = parsed.work_dates || [];
+      for (var i = 0; i < wdArr.length; i++) {
+        if (workdays.indexOf(wdArr[i]) < 0) workdays.push(wdArr[i]);
+      }
+      sv(WORKDAYS_KEY, workdays);
+      for (var j = 0; j < wdArr.length; j++) {
+        var d2 = wdArr[j], wid = 'work_' + d2;
+        var found = false;
+        for (var k = 0; k < events.length; k++) { if (events[k].id === wid) { found = true; break; } }
+        if (!found) events.push({ id:wid, title:'🚕 出番', date:d2, time:'', note:'大丸交通', category:'work' });
+      }
+      sv(EVENTS_KEY, events);
+      if (parsed.close_day) el('closeDay').value = String(parsed.close_day);
+      renderCalendar(); renderSchedule(); renderTodaySch(); renderMonthly();
+      el('schedResult').innerHTML =
+        '<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px">✅ カレンダーに反映しました！</div>' +
+        '<div style="font-size:11px;color:var(--muted);line-height:1.9">' +
+        (parsed.year||'') + '年' + (parsed.month||'') + '月<br>' +
+        '出勤日：' + wdArr.length + '日<br>' +
+        '締め日：' + (parsed.close_day||15) + '日</div>';
+      el('schedResult').classList.add('show');
+      el('schedLoading').classList.remove('show');
+    }, function(errMsg) {
+      el('schedResult').innerHTML = '<div style="font-size:11px;color:var(--red)">⚠ エラー：' + errMsg + '</div>';
+      el('schedResult').classList.add('show');
+      el('schedLoading').classList.remove('show');
+    });
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+
+
+// ============================================================
+// 月集計
+// ============================================================
+function setMonMode(m) {
+  monMode = m;
+  el('tsClose').classList.toggle('on', m === 'close');
+  el('tsMonth').classList.toggle('on', m === 'month');
+  renderMonthly();
+}
+
+function renderMonthly() {
+  var ym = el('monMonth').value;
+  if (!ym) { var y2 = TODAY.getFullYear(), mo2 = TODAY.getMonth()+1; ym = y2 + '-' + String(mo2).padStart(2,'0'); }
+  var parts = ym.split('-'), y = parseInt(parts[0]), mo = parseInt(parts[1]);
+  var closeDay = parseInt(el('closeDay').value) || 15;
+  var data = nippoData();
+  var start, end;
+  if (monMode === 'close') {
+    var pm = mo === 1 ? 12 : mo - 1, py = mo === 1 ? y - 1 : y;
+    var pLastDay = new Date(y, mo - 1, 0).getDate();
+    var prevCloseDay = Math.min(closeDay + 1, pLastDay);
+    start = py + '-' + String(pm).padStart(2,'0') + '-' + String(prevCloseDay).padStart(2,'0');
+    end   = y  + '-' + String(mo).padStart(2,'0') + '-' + String(closeDay).padStart(2,'0');
+    el('monPeriodLabel').textContent = '会社締め集計：' + start.slice(5).replace('-','/') + ' 〜 ' + end.slice(5).replace('-','/') + '（締め日：毎月' + closeDay + '日）';
+  } else {
+    start = ym + '-01';
+    var lastDay = new Date(y, mo, 0).getDate();
+    end = ym + '-' + String(lastDay).padStart(2,'0');
+    el('monPeriodLabel').textContent = '月末集計：' + y + '年' + mo + '月（' + start.slice(5).replace('-','/') + ' 〜 ' + end.slice(5).replace('-','/') + '）';
+  }
+  var filtered = [];
+  for (var i = 0; i < data.length; i++) { if (data[i].date >= start && data[i].date <= end) filtered.push(data[i]); }
+  filtered.sort(function(a,b){ return a.date > b.date ? 1 : -1; });
+  var totalSales = 0, totalRides = 0, totalKm = 0, totalJitsu = 0;
+  for (var j = 0; j < filtered.length; j++) {
+    totalSales += filtered[j].sales || 0; totalRides += filtered[j].rides || 0;
+    totalKm    += filtered[j].km    || 0; totalJitsu += filtered[j].jitsu || 0;
+  }
+  var wd2 = filtered.length;
+  var avgSales = wd2 ? Math.round(totalSales / wd2) : 0;
+  var avgJitsu = wd2 ? (totalJitsu / wd2).toFixed(1) : 0;
+  el('monStats').innerHTML =
+    '<div class="sum-item"><div class="sum-lbl">月間売上</div><div class="sum-val" style="color:var(--gold)">' + totalSales.toLocaleString() + '円</div><div class="sum-sub">平均 ' + avgSales.toLocaleString() + '円/日</div></div>' +
+    '<div class="sum-item"><div class="sum-lbl">乗務日数</div><div class="sum-val">' + wd2 + '日</div></div>' +
+    '<div class="sum-item"><div class="sum-lbl">総乗車回数</div><div class="sum-val">' + totalRides + '回</div><div class="sum-sub">平均 ' + (wd2 ? Math.round(totalRides/wd2) : 0) + '回/日</div></div>' +
+    '<div class="sum-item"><div class="sum-lbl">平均実車率</div><div class="sum-val">' + avgJitsu + '%</div><div class="sum-sub">総走行 ' + totalKm.toFixed(1) + 'km</div></div>';
+  drawMonChart(filtered);
+  // 一覧
+  var wd3 = ['日','月','火','水','木','金','土'];
+  var listH = '';
+  if (!filtered.length) {
+    listH = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:16px">この期間のデータはありません</div>';
+  } else {
+    for (var li = 0; li < filtered.length; li++) {
+      var rec = filtered[li];
+      var dt3 = new Date(rec.date + 'T00:00:00');
+      listH += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(201,168,76,0.08);">';
+      listH += '<div style="flex:none;width:52px;font-size:11px;color:var(--muted)">' + rec.date.slice(5).replace('-','/') + '(' + wd3[dt3.getDay()] + ')</div>';
+      listH += '<div style="flex:1;font-size:12px">' + (rec.grade ? '<span style="font-size:10px;color:var(--gold)">' + rec.grade + '</span> ' : '') + (rec.hours||'') + (rec.memo ? ' — '+rec.memo : '') + '</div>';
+      listH += '<div style="text-align:right;flex:none"><div style="font-family:\'Shippori Mincho\',serif;font-size:14px">' + (rec.sales||0).toLocaleString() + '円</div><div style="font-size:10px;color:var(--muted)">' + (rec.rides||0) + '回 / ' + (rec.km||0) + 'km</div></div>';
+      listH += '</div>';
+    }
+  }
+  el('monList').innerHTML = listH;
+}
+
+function drawMonChart(data) {
+  var cv = el('monChart');
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.offsetWidth, H = cv.offsetHeight;
+  if (!W || !H || !data.length) return;
+  cv.width = W * dpr; cv.height = H * dpr;
+  var ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  var maxS = 0;
+  for (var i = 0; i < data.length; i++) { if (data[i].sales > maxS) maxS = data[i].sales; }
+  if (!maxS) maxS = 1;
+  var bw = Math.min((W - 20) / data.length - 3, 28);
+  ctx.strokeStyle = 'rgba(201,168,76,0.15)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H-20); ctx.lineTo(W, H-20); ctx.stroke();
+  for (var j = 0; j < data.length; j++) {
+    var x = 10 + j * ((W-20)/data.length) + ((W-20)/data.length - bw) / 2;
+    var bh = (H-28) * data[j].sales / maxS;
+    var y = H - 20 - bh;
+    ctx.fillStyle = data[j].date === todayStr() ? 'rgba(201,168,76,0.85)' : 'rgba(44,95,138,0.5)';
+    ctx.fillRect(x, y, bw, bh);
+    ctx.fillStyle = 'rgba(26,20,16,0.35)';
+    ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(data[j].date.slice(8) + '日', x + bw/2, H - 5);
+  }
+}
+
+// ============================================================
+// ナビゲーション
+// ============================================================
+function goSec(id) {
+  var secs = document.querySelectorAll('.sec');
+  for (var i = 0; i < secs.length; i++) secs[i].classList.remove('on');
+  el('sec-' + id).classList.add('on');
+  var tabs = document.querySelectorAll('.tab');
+  for (var j = 0; j < tabs.length; j++) tabs[j].classList.toggle('on', tabs[j].getAttribute('data-sec') === id);
+  el('fab').style.display = id === 'calendar' ? 'flex' : 'none';
+  if (id === 'bio')     setTimeout(drawBioChart, 60);
+  if (id === 'nippo')   renderNippo();
+  if (id === 'monthly') {
+    var ym = TODAY.getFullYear() + '-' + String(TODAY.getMonth()+1).padStart(2,'0');
+    if (!el('monMonth').value) el('monMonth').value = ym;
+    setTimeout(renderMonthly, 60);
+  }
+}
+
+// ============================================================
+// 起動
+// ============================================================
+window.onload = function() {
+  loadState();
+  ensureFamilyEvents();
+  renderHeader();
+  renderFortune();
+  renderLucky();
+  renderFamilyToday();
+  renderCalendar();
+  renderSchedule();
+  renderTodaySch();
+  renderBio();
+  renderAstro();
+  syncSign();
+  renderCheck();
+  renderNippoQuick();
+
+  checkApiKey();
+  // タブ
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) {
+    (function(tab) {
+      tab.onclick = function() { goSec(tab.getAttribute('data-sec')); };
+    })(tabs[i]);
+  }
+  // モーダル外クリック
+  el('addModal').onclick = function(e) { if (e.target === this) closeAdd(); };
+  // 写真入力
+  el('nippoImg').onchange  = function() { readNippoPhoto(this, false); };
+  el('nippoImg2').onchange = function() { readNippoPhoto(this, true); };
+  el('schedImg').onchange  = function() { readSchedPhoto(this); };
+  // リサイズ
+  window.onresize = function() { drawBioChart(); };
+};</script>
+</body>
+</html>
