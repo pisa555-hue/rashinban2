@@ -270,27 +270,36 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <section class="sec" id="sec-astro">
 
-  <!-- 誕生日設定 -->
-  <div class="card">
-    <div class="card-ttl">誕生日設定</div>
-    <div style="display:flex;gap:9px;align-items:center;">
-      <input type="date" class="form-inp" id="fortuneBirth" style="flex:1;" onchange="renderFortunePage()">
-      <button class="btn-gold" style="width:auto;padding:10px 16px;font-size:11px;" onclick="resetFortuneBirth()">リセット</button>
+  <!-- 誕生日・人物切替 -->
+  <div class="card" style="margin-bottom:10px;">
+    <div class="card-ttl">占い対象</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="personBtns"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="date" class="form-inp" id="fortuneBirth" style="flex:1;" onchange="onBirthChange()">
+      <div style="font-size:11px;color:var(--muted);flex:none;" id="birthName">昌志</div>
     </div>
   </div>
 
-  <!-- 詳細パネル（タップで表示） -->
+  <!-- 詳細パネル -->
   <div id="fortuneDetail" style="display:none;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button onclick="closeFortureDetail()" style="background:none;border:1px solid var(--border);border-radius:2px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;">← 戻る</button>
-      <div style="font-family:'Shippori Mincho',serif;font-size:16px;" id="detailTitle"></div>
-    </div>
+    <button onclick="closeFortuneDetail()" style="background:none;border:1px solid var(--border);border-radius:2px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:12px;">← 戻る</button>
+    <div style="font-family:'Shippori Mincho',serif;font-size:17px;margin-bottom:12px;" id="detailTitle"></div>
     <div class="card" id="detailBody"></div>
   </div>
 
   <!-- メイン一覧 -->
   <div id="fortuneMain">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="fortuneGrid"></div>
+    <!-- 7種の占いカード -->
+    <div id="fortuneCards"></div>
+
+    <!-- 家族バイオリズム（折りたたみ） -->
+    <div class="card" style="margin-top:4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleFamBio()">
+        <div class="card-ttl" style="margin:0;">家族のバイオリズム</div>
+        <div id="famBioArrow" style="font-size:18px;color:var(--muted);">▶</div>
+      </div>
+      <div id="famBioBody" style="display:none;margin-top:12px;"></div>
+    </div>
   </div>
 
 </section>
@@ -909,245 +918,455 @@ function drawBioChart() {
 }
 
 // ============================================================
-// 占い（6種）
+// ============================================================
+// 占い（7種） - 完全版
 // ============================================================
 var FORTUNE_BIRTH_KEY = 'fortuneBirthDate';
+var FORTUNE_NAME_KEY  = 'fortuneName';
+
+var PERSONS = [
+  { name:'昌志', birth:'1961-07-27', sign:'leo' },
+  { name:'ニンファ', birth:'1974-12-05', sign:'sagittarius' },
+  { name:'音夢', birth:'2002-02-16', sign:'aquarius' },
+  { name:'礼', birth:'2005-03-09', sign:'pisces' }
+];
+
+var SIGNS_DATA = [
+  {id:'aries',      e:'♈',n:'牡羊座',  r:'3/21-4/19'},
+  {id:'taurus',     e:'♉',n:'牡牛座',  r:'4/20-5/20'},
+  {id:'gemini',     e:'♊',n:'双子座',  r:'5/21-6/21'},
+  {id:'cancer',     e:'♋',n:'蟹座',    r:'6/22-7/22'},
+  {id:'leo',        e:'♌',n:'獅子座',  r:'7/23-8/22'},
+  {id:'virgo',      e:'♍',n:'乙女座',  r:'8/23-9/22'},
+  {id:'libra',      e:'♎',n:'天秤座',  r:'9/23-10/23'},
+  {id:'scorpio',    e:'♏',n:'蠍座',    r:'10/24-11/22'},
+  {id:'sagittarius',e:'♐',n:'射手座',  r:'11/23-12/21'},
+  {id:'capricorn',  e:'♑',n:'山羊座',  r:'12/22-1/19'},
+  {id:'aquarius',   e:'♒',n:'水瓶座',  r:'1/20-2/18'},
+  {id:'pisces',     e:'♓',n:'魚座',    r:'2/19-3/20'}
+];
 
 function getFortuneBirth() {
   var stored = localStorage.getItem(FORTUNE_BIRTH_KEY);
   if (stored) return new Date(stored + 'T00:00:00');
   return PROFILE_BIRTH;
 }
+function getFortuneName() {
+  return localStorage.getItem(FORTUNE_NAME_KEY) || '昌志';
+}
+function getFortuneSign() {
+  var name = getFortuneName();
+  for (var i=0;i<PERSONS.length;i++) if(PERSONS[i].name===name) return PERSONS[i].sign;
+  return 'leo';
+}
 
-function resetFortuneBirth() {
-  localStorage.removeItem(FORTUNE_BIRTH_KEY);
-  el('fortuneBirth').value = '1961-07-27';
+function onBirthChange() {
+  var val = el('fortuneBirth').value;
+  if (val) {
+    localStorage.setItem(FORTUNE_BIRTH_KEY, val);
+    localStorage.setItem(FORTUNE_NAME_KEY, 'カスタム');
+    el('birthName').textContent = 'カスタム';
+  }
   renderFortunePage();
 }
 
-function renderFortunePage() {
-  var birthVal = el('fortuneBirth').value;
-  if (birthVal) localStorage.setItem(FORTUNE_BIRTH_KEY, birthVal);
-  var birth = getFortuneBirth();
-  var today = TODAY;
-  var items = [
-    { id:'kyusei',    ico:'\u2b50', name:'\u4e5d\u661f\u6c17\u5b66',   sub:calcKyusei(birth,today).honmei },
-    { id:'shichu',    ico:'\ud83d\udd2e', name:'\u56db\u67f1\u63a8\u547d',   sub:calcShichu(today).day },
-    { id:'bio',       ico:'\ud83c\udf0a', name:'\u30d0\u30a4\u30aa\u30ea\u30ba\u30e0', sub:getBioSummary(birth,today) },
-    { id:'suuhi',     ico:'\ud83d\udd22', name:'\u6570\u79d8\u8853',     sub:'\u4eca\u65e5\uff1a' + calcSuuhi(birth,today) },
-    { id:'rokuyo',    ico:'\ud83d\udcc5', name:'\u516d\u66dc',       sub:calcRokuyo(today).name },
-    { id:'junichoku', ico:'\ud83c\udf3f', name:'\u5341\u4e8c\u76f4',     sub:calcJunichoku(today).name }
-  ];
+function setPerson(idx) {
+  var p = PERSONS[idx];
+  localStorage.setItem(FORTUNE_BIRTH_KEY, p.birth);
+  localStorage.setItem(FORTUNE_NAME_KEY, p.name);
+  el('fortuneBirth').value = p.birth;
+  el('birthName').textContent = p.name;
+  renderFortunePage();
+}
+
+function renderAstro() {
+  // 人物ボタン
+  var btns = el('personBtns');
+  var curName = getFortuneName();
   var h = '';
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i];
-    h += '<div class="card" style="cursor:pointer;text-align:center;padding:16px 10px;" onclick="showFortuneDetail(\''+item.id+'\')">'+
-         '<div style="font-size:28px;margin-bottom:6px">'+item.ico+'</div>'+
-         '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;margin-bottom:4px">'+item.name+'</div>'+
-         '<div style="font-size:11px;color:var(--gold)">'+item.sub+'</div>'+
-         '<div style="font-size:10px;color:var(--muted);margin-top:6px;">\u30bf\u30c3\u30d7\u3067\u8a73\u7d30</div></div>';
+  for (var i=0;i<PERSONS.length;i++) {
+    var p = PERSONS[i];
+    var on = p.name === curName;
+    h += '<button onclick="setPerson('+i+')" style="padding:6px 12px;font-size:12px;border:1px solid '+(on?'var(--gold)':'var(--border)')+';border-radius:2px;background:'+(on?'rgba(201,168,76,0.1)':'transparent')+';cursor:pointer;font-family:\'Zen Kaku Gothic New\',sans-serif;">' + p.name + '</button>';
   }
-  el('fortuneGrid').innerHTML = h;
+  btns.innerHTML = h;
+
+  // 生年月日セット
+  var birth = getFortuneBirth();
+  el('fortuneBirth').value = birth.getFullYear() + '-' + String(birth.getMonth()+1).padStart(2,'0') + '-' + String(birth.getDate()).padStart(2,'0');
+  el('birthName').textContent = getFortuneName();
+
+  renderFortunePage();
+  renderFamBioSection();
+}
+
+function syncSign() {
+  var r = calcRokuyo(TODAY);
+  el('astroQ').textContent = r.name;
+  el('mySignIco').textContent = '🔮';
+}
+
+function renderFortunePage() {
+  var birth = getFortuneBirth();
+  var sign  = getFortuneSign();
+  var today = TODAY;
+  var name  = getFortuneName();
+
+  var k  = calcKyusei(birth, today);
+  var sh = calcShichu(today);
+  var ph = bioVal(birth,today,23), em = bioVal(birth,today,28), intel = bioVal(birth,today,33), intu = bioVal(birth,today,38);
+  var su = calcSuuhi(birth, today);
+  var ry = calcRokuyo(today);
+  var jd = calcJunichoku(today);
+  var sg = calcSignFortune(sign, today);
+  var signData = null;
+  for(var i=0;i<SIGNS_DATA.length;i++){if(SIGNS_DATA[i].id===sign){signData=SIGNS_DATA[i];break;}}
+
+  var cards = [
+    {
+      id:'kyusei', ico:'⭐', name:'九星気学',
+      summary: k.honmei + '　吉方位：' + k.dir,
+      comment: k.message.slice(0,30) + '…'
+    },
+    {
+      id:'shichu', ico:'🔮', name:'四柱推命・日柱',
+      summary: sh.day + '　' + sh.gogyo,
+      comment: sh.message.slice(0,28) + '…'
+    },
+    {
+      id:'bio', ico:'🌊', name:'バイオリズム',
+      summary: '',
+      bioRows: [
+        {lbl:'💪 身体',  val:ph,   color:'#e74c3c'},
+        {lbl:'💙 感情',  val:em,   color:'#3498db'},
+        {lbl:'🧠 知性',  val:intel, color:'#f39c12'},
+        {lbl:'✨ 直感',  val:intu,  color:'#9b59b6'}
+      ]
+    },
+    {
+      id:'suuhi', ico:'🔢', name:'数秘術',
+      summary: '今日の数字：' + su,
+      comment: getSuuhiDetail(su).keyword
+    },
+    {
+      id:'rokuyo', ico:'📅', name:'六曜',
+      summary: ry.name + '　' + ry.kikkyo,
+      comment: ry.message.slice(0,28) + '…'
+    },
+    {
+      id:'junichoku', ico:'🌿', name:'十二直',
+      summary: jd.name + '　' + jd.kikkyo,
+      comment: jd.message.slice(0,28) + '…'
+    },
+    {
+      id:'seiza', ico: signData ? signData.e : '⭐', name: (signData ? signData.n : '星座') + '（' + name + '）',
+      summary: '今日の運勢：' + starsStr(sg.total),
+      comment: sg.message.slice(0,28) + '…'
+    }
+  ];
+
+  var h = '';
+  for (var ci=0; ci<cards.length; ci++) {
+    var c = cards[ci];
+    h += '<div class="card" style="cursor:pointer;margin-bottom:10px;padding:13px 14px;" onclick="showFortuneDetail(\''+c.id+'\')">';
+    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">';
+    h += '<span style="font-size:22px">'+c.ico+'</span>';
+    h += '<div style="flex:1"><div style="font-family:\'Shippori Mincho\',serif;font-size:14px;">'+c.name+'</div>';
+    if (c.summary) h += '<div style="font-size:11px;color:var(--gold);margin-top:2px;">'+c.summary+'</div>';
+    h += '</div>';
+    h += '<div style="font-size:11px;color:var(--muted);flex:none;">詳細 ›</div>';
+    h += '</div>';
+    if (c.bioRows) {
+      // バイオリズム：4波をミニバーで表示
+      for (var bi=0;bi<c.bioRows.length;bi++) {
+        var br = c.bioRows[bi];
+        var pct = Math.round(br.val*100);
+        var bw  = Math.round((br.val+1)/2*100);
+        h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">';
+        h += '<span style="font-size:10px;width:48px;flex:none;color:var(--muted)">'+br.lbl+'</span>';
+        h += '<div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden">';
+        h += '<div style="height:100%;width:'+bw+'%;background:'+br.color+';border-radius:2px;"></div></div>';
+        h += '<span style="font-size:10px;color:'+br.color+';flex:none;width:36px;text-align:right">'+(pct>=0?'+':'')+pct+'%</span>';
+        h += '</div>';
+      }
+    } else if (c.comment) {
+      h += '<div style="font-size:11px;color:var(--muted);line-height:1.6;">'+c.comment+'</div>';
+    }
+    h += '</div>';
+  }
+  el('fortuneCards').innerHTML = h;
 }
 
 function showFortuneDetail(id) {
   var birth = getFortuneBirth();
   var today = TODAY;
+  var sign  = getFortuneSign();
   el('fortuneMain').style.display = 'none';
   el('fortuneDetail').style.display = 'block';
-  var title = '', html = '';
-  if (id === 'kyusei') {
-    title = '\u2b50 \u4e5d\u661f\u6c17\u5b66';
-    var k = calcKyusei(birth, today);
-    html = makeDetailCard([
-      {lbl:'\u672c\u547d\u661f', val:k.honmei},
-      {lbl:'\u4eca\u65e5\u306e\u4e5d\u661f', val:k.today},
-      {lbl:'\u76f8\u6027\u306e\u826f\u3044\u661f', val:k.ai},
-      {lbl:'\u5409\u65b9\u4f4d', val:k.dir}
+  window.scrollTo(0,0);
+
+  var title='', html='';
+
+  if (id==='kyusei') {
+    title='⭐ 九星気学';
+    var k=calcKyusei(birth,today);
+    html=makeDetailCard([
+      {lbl:'本命星',val:k.honmei},{lbl:'今日の九星',val:k.today},
+      {lbl:'相性の良い星',val:k.ai},{lbl:'吉方位',val:k.dir}
     ], k.message);
-  } else if (id === 'shichu') {
-    title = '\ud83d\udd2e \u56db\u67f1\u63a8\u547d\u30fb\u65e5\u67f1';
-    var s = calcShichu(today);
-    html = makeDetailCard([
-      {lbl:'\u65e5\u67f1', val:s.day},
-      {lbl:'\u4e94\u884c', val:s.gogyo},
-      {lbl:'\u5341\u795e', val:s.shinkan}
-    ], s.message);
-  } else if (id === 'bio') {
-    title = '\ud83c\udf0a \u30d0\u30a4\u30aa\u30ea\u30ba\u30e0';
-    var ph = bioVal(birth,today,23), em = bioVal(birth,today,28), intel = bioVal(birth,today,33), intu = bioVal(birth,today,38);
-    html = makeBioBar('\ud83d\udcaa \u8eab\u4f53',ph,'#e74c3c') + makeBioBar('\ud83d\udc99 \u611f\u60c5',em,'#3498db') + makeBioBar('\ud83e\udde0 \u77e5\u6027',intel,'#f39c12') + makeBioBar('\u2728 \u76f4\u611f',intu,'#9b59b6') +
-      '<div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)">' + getBioAdviceDetail(ph,em,intel) + '</div>';
-  } else if (id === 'suuhi') {
-    title = '\ud83d\udd22 \u6570\u79d8\u8853';
-    var n = calcSuuhi(birth,today), sd = getSuuhiDetail(n);
-    html = makeDetailCard([{lbl:'\u4eca\u65e5\u306e\u6570\u5b57', val:String(n)},{lbl:'\u30ad\u30fc\u30ef\u30fc\u30c9', val:sd.keyword}], sd.message);
-  } else if (id === 'rokuyo') {
-    title = '\ud83d\udcc5 \u516d\u66dc';
-    var r = calcRokuyo(today);
-    html = makeDetailCard([{lbl:'\u4eca\u65e5\u306e\u516d\u66dc', val:r.name},{lbl:'\u8aad\u307f\u65b9', val:r.yomi},{lbl:'\u5409\u51f6', val:r.kikkyo}], r.message);
-  } else if (id === 'junichoku') {
-    title = '\ud83c\udf3f \u5341\u4e8c\u76f4';
-    var j = calcJunichoku(today);
-    html = makeDetailCard([{lbl:'\u4eca\u65e5\u306e\u5341\u4e8c\u76f4', val:j.name},{lbl:'\u8aad\u307f\u65b9', val:j.yomi},{lbl:'\u5409\u51f6', val:j.kikkyo}], j.message);
+  } else if (id==='shichu') {
+    title='🔮 四柱推命・日柱';
+    var sh=calcShichu(today);
+    html=makeDetailCard([
+      {lbl:'日柱',val:sh.day},{lbl:'五行',val:sh.gogyo},{lbl:'十神',val:sh.shinkan}
+    ], sh.message);
+  } else if (id==='bio') {
+    title='🌊 バイオリズム';
+    var ph=bioVal(birth,today,23),em=bioVal(birth,today,28),intel=bioVal(birth,today,33),intu=bioVal(birth,today,38);
+    html=makeBioBar('💪 身体',ph,'#e74c3c')+makeBioBar('💙 感情',em,'#3498db')+
+         makeBioBar('🧠 知性',intel,'#f39c12')+makeBioBar('✨ 直感',intu,'#9b59b6')+
+         '<div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)">'+
+         getBioAdviceDetail(ph,em,intel)+'</div>';
+  } else if (id==='suuhi') {
+    title='🔢 数秘術';
+    var su=calcSuuhi(birth,today), sd=getSuuhiDetail(su);
+    html=makeDetailCard([{lbl:'今日の数字',val:String(su)},{lbl:'キーワード',val:sd.keyword}],sd.message);
+  } else if (id==='rokuyo') {
+    title='📅 六曜';
+    var r=calcRokuyo(today);
+    html=makeDetailCard([{lbl:'今日の六曜',val:r.name},{lbl:'読み方',val:r.yomi},{lbl:'吉凶',val:r.kikkyo}],r.message);
+  } else if (id==='junichoku') {
+    title='🌿 十二直';
+    var j=calcJunichoku(today);
+    html=makeDetailCard([{lbl:'今日の十二直',val:j.name},{lbl:'読み方',val:j.yomi},{lbl:'吉凶',val:j.kikkyo}],j.message);
+  } else if (id==='seiza') {
+    title='星座運勢';
+    var sg=calcSignFortune(sign,today);
+    var sd2=null;for(var i=0;i<SIGNS_DATA.length;i++){if(SIGNS_DATA[i].id===sign){sd2=SIGNS_DATA[i];break;}}
+    if(sd2) title=sd2.e+' '+sd2.n+'　今日の運勢';
+    html=makeDetailCard([
+      {lbl:'総合運',val:starsStr(sg.total)},
+      {lbl:'恋愛運',val:starsStr(sg.love)},
+      {lbl:'仕事運',val:starsStr(sg.work)},
+      {lbl:'金運',  val:starsStr(sg.money)},
+      {lbl:'健康運',val:starsStr(sg.health)}
+    ], sg.message);
   }
   el('detailTitle').textContent = title;
   el('detailBody').innerHTML = html;
-  window.scrollTo(0,0);
 }
 
-function closeFortureDetail() {
+function closeFortuneDetail() {
   el('fortuneDetail').style.display = 'none';
   el('fortuneMain').style.display = 'block';
 }
 
-function makeDetailCard(rows, message) {
-  var h = '';
-  for (var i = 0; i < rows.length; i++) {
-    h += '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">'+
-         '<span style="font-size:11px;color:var(--muted)">'+rows[i].lbl+'</span>'+
-         '<span style="font-family:\'Shippori Mincho\',serif;font-size:15px">'+rows[i].val+'</span></div>';
+function toggleFamBio() {
+  var body = el('famBioBody');
+  var arrow = el('famBioArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+    renderFamBioSection();
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
   }
-  h += '<div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)">'+message+'</div>';
+}
+
+function renderFamBioSection() {
+  var el2 = el('famBioBody');
+  if (!el2 || el2.style.display === 'none') return;
+  var h = '';
+  for (var i=0;i<PERSONS.length;i++) {
+    var p = PERSONS[i];
+    var birth = new Date(p.birth + 'T00:00:00');
+    var ph=bioVal(birth,TODAY,23),em=bioVal(birth,TODAY,28),intel=bioVal(birth,TODAY,33),intu=bioVal(birth,TODAY,38);
+    h += '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">';
+    h += '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;margin-bottom:8px;color:var(--gold)">'+p.name+'</div>';
+    h += makeBioBar('💪 身体',ph,'#e74c3c')+makeBioBar('💙 感情',em,'#3498db')+
+         makeBioBar('🧠 知性',intel,'#f39c12')+makeBioBar('✨ 直感',intu,'#9b59b6');
+    h += '<button onclick="showFamBioDetail('+i+')" style="margin-top:6px;padding:6px 14px;font-size:11px;background:none;border:1px solid var(--border);border-radius:2px;cursor:pointer;font-family:\'Zen Kaku Gothic New\',sans-serif;color:var(--muted);">詳細アドバイス</button>';
+    h += '</div>';
+  }
+  el2.innerHTML = h;
+}
+
+function showFamBioDetail(idx) {
+  var p = PERSONS[idx];
+  var birth = new Date(p.birth + 'T00:00:00');
+  var ph=bioVal(birth,TODAY,23),em=bioVal(birth,TODAY,28),intel=bioVal(birth,TODAY,33),intu=bioVal(birth,TODAY,38);
+  el('fortuneMain').style.display = 'none';
+  el('fortuneDetail').style.display = 'block';
+  el('detailTitle').textContent = '🌊 ' + p.name + 'のバイオリズム';
+  el('detailBody').innerHTML = makeBioBar('💪 身体',ph,'#e74c3c')+makeBioBar('💙 感情',em,'#3498db')+
+    makeBioBar('🧠 知性',intel,'#f39c12')+makeBioBar('✨ 直感',intu,'#9b59b6')+
+    '<div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)">'+
+    getBioAdviceDetail(ph,em,intel)+'</div>';
+  window.scrollTo(0,0);
+}
+
+function makeDetailCard(rows, message) {
+  var h='';
+  for(var i=0;i<rows.length;i++){
+    h+='<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">'+
+       '<span style="font-size:11px;color:var(--muted)">'+rows[i].lbl+'</span>'+
+       '<span style="font-family:\'Shippori Mincho\',serif;font-size:15px">'+rows[i].val+'</span></div>';
+  }
+  h+='<div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted);padding-top:10px;border-top:1px solid var(--border)">'+message+'</div>';
   return h;
 }
 
 function makeBioBar(label, val, color) {
-  var pct = Math.round(val*100), barW = Math.round((val+1)/2*100);
+  var pct=Math.round(val*100), bw=Math.round((val+1)/2*100);
   return '<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;">'+
     '<span style="font-size:12px">'+label+'</span>'+
     '<span style="font-family:\'Shippori Mincho\',serif;font-size:13px;color:'+color+'">'+(pct>=0?'+':'')+pct+'% '+bioSt(val)+'</span></div>'+
     '<div style="height:6px;background:rgba(0,0,0,0.07);border-radius:3px;overflow:hidden">'+
-    '<div style="height:100%;width:'+barW+'%;background:'+color+';border-radius:3px;"></div></div></div>';
+    '<div style="height:100%;width:'+bw+'%;background:'+color+';border-radius:3px;"></div></div></div>';
 }
 
 function getBioSummary(birth, today) {
-  var ph = bioVal(birth,today,23), em = bioVal(birth,today,28), avg = (ph+em)/2;
-  if (avg>0.5) return '\u597d\u8abf'; if (avg>0) return '\u666e\u901a'; if (avg>-0.5) return '\u3084\u3084\u4f4e\u8abf'; return '\u4f4e\u8abf';
+  var ph=bioVal(birth,today,23),em=bioVal(birth,today,28),avg=(ph+em)/2;
+  if(avg>0.5)return '好調';if(avg>0)return '普通';if(avg>-0.5)return 'やや低調';return '低調';
 }
 
-function getBioAdviceDetail(ph, em, intel) {
-  var adv = [];
-  if (Math.abs(ph)<0.12) adv.push('\u8eab\u4f53\u30ea\u30ba\u30e0\u306f\u8ee2\u63db\u671f\u3002\u7121\u7406\u306f\u7981\u7269\u3002');
-  else if (ph>0.5) adv.push('\u8eab\u4f53\u7d76\u597d\u8abf\uff01\u4f53\u529b\u3092\u8981\u3059\u308b\u4f5c\u696d\u306b\u6700\u9069\u3002');
-  else if (ph<-0.5) adv.push('\u8eab\u4f53\u30ea\u30ba\u30e0\u4f4e\u8abf\u671f\u3002\u5341\u5206\u306a\u4f11\u606f\u3092\u3002');
-  if (Math.abs(em)<0.12) adv.push('\u611f\u60c5\u30ea\u30ba\u30e0\u8ee2\u63db\u671f\u3002\u6c17\u6301\u3061\u304c\u4e0d\u5b89\u5b9a\u306b\u306a\u308a\u3084\u3059\u3044\u3002');
-  else if (em>0.5) adv.push('\u611f\u60c5\u30ea\u30ba\u30e0\u9ad8\u3081\uff01\u30b3\u30df\u30e5\u30cb\u30b1\u30fc\u30b7\u30e7\u30f3\u306b\u6700\u9069\u3002');
-  else if (em<-0.5) adv.push('\u611f\u60c5\u304c\u63fa\u308c\u3084\u3059\u3044\u6642\u671f\u3002\u91cd\u8981\u306a\u6c7a\u65ad\u306f\u5148\u9001\u308a\u3092\u3002');
-  if (intel>0.5) adv.push('\u77e5\u6027\u30ea\u30ba\u30e0\u9ad8\u5cf0\uff01\u4f01\u753b\u30fb\u5b66\u7fd2\u306b\u7d76\u597d\u306e\u30bf\u30a4\u30df\u30f3\u30b0\u3002');
-  else if (intel<-0.5) adv.push('\u77e5\u7684\u6d3b\u52d5\u306f\u4f4e\u8abf\u3002\u5927\u5c40\u7684\u601d\u8003\u3092\u512a\u5148\u3057\u3066\u3002');
-  if (!adv.length) adv.push('\u5168\u4f53\u7684\u306b\u30d0\u30e9\u30f3\u30b9\u306e\u826f\u3044\u72b6\u614b\u3002\u4eca\u65e5\u3082\u7a4d\u6975\u7684\u306b\u884c\u52d5\u3057\u307e\u3057\u3087\u3046\u3002');
+function getBioAdviceDetail(ph,em,intel) {
+  var adv=[];
+  if(Math.abs(ph)<0.12)adv.push('身体リズムは転換期。無理は禁物。');
+  else if(ph>0.5)adv.push('身体絶好調！体力を要する作業に最適。');
+  else if(ph<-0.5)adv.push('身体リズム低調期。十分な休息を。');
+  else if(ph>0)adv.push('身体リズム上昇中。積極的に動きましょう。');
+  if(Math.abs(em)<0.12)adv.push('感情リズム転換期。気持ちが不安定になりやすい。');
+  else if(em>0.5)adv.push('感情リズム高め！コミュニケーションに最適。');
+  else if(em<-0.5)adv.push('感情が揺れやすい時期。重要な決断は先送りを。');
+  if(intel>0.5)adv.push('知性リズム高峰！企画・学習に絶好のタイミング。');
+  else if(intel<-0.5)adv.push('知的活動は低調。大局的思考を優先して。');
+  if(!adv.length)adv.push('全体的にバランスの良い状態です。今日も積極的に行動しましょう。');
   return adv.join('<br>');
 }
 
+// 西洋12星座運勢
+function calcSignFortune(signId, today) {
+  var s=hashDay(today);
+  var idx=0;for(var i=0;i<SIGNS_DATA.length;i++){if(SIGNS_DATA[i].id===signId){idx=i;break;}}
+  var seed=(s+idx*31)%100;
+  var MSGS={
+    aries:'直感を信じて前進する日。新しい挑戦に最適。',
+    taurus:'落ち着いた判断力が冴える日。美しいものに触れることで運気アップ。',
+    gemini:'情報収集と発信の日。多方面のアプローチが好機を呼ぶ。',
+    cancer:'感受性が高まっています。大切な人との時間を優先して。',
+    leo:'リーダーシップを発揮する好機。自信と熱意が周囲を動かす。',
+    virgo:'細部への注意力が冴えわたる日。緻密な作業に最適。',
+    libra:'人間関係に吉。相手の立場に立つことでwin-winな関係が築ける。',
+    scorpio:'深い洞察力が冴える日。本質を見極めることで道が開ける。',
+    sagittarius:'視野を広げる日。遠方や新しい体験にアンテナを張って。',
+    capricorn:'目標への着実な歩みが吉。地道な努力が大きな成果につながる。',
+    aquarius:'独自の発想が輝く日。革新的なアイデアを大切に。',
+    pisces:'直感とインスピレーションの日。芸術・音楽に縁あり。'
+  };
+  return {
+    total:40+seed%60, love:30+(seed*3)%70, work:35+(seed*7)%65,
+    money:25+(seed*11)%75, health:45+(seed*5)%55,
+    message: MSGS[signId]||'あなたの星がガイドします。'
+  };
+}
+
+// 九星気学
 function calcKyusei(birth, today) {
-  var STARS = ['\u4e00\u767d\u6c34\u661f','\u4e8c\u9ed2\u571f\u661f','\u4e09\u78a7\u6728\u661f','\u56db\u7dd1\u6728\u661f','\u4e94\u9ec4\u571f\u661f','\u516d\u767d\u91d1\u661f','\u4e03\u8d64\u91d1\u661f','\u516b\u767d\u571f\u661f','\u4e5d\u7d2b\u706b\u661f'];
-  var DIRS  = ['\u5317','\u5357\u897f','\u6771','\u5357\u6771','\u4e2d\u592e','\u5317\u897f','\u897f','\u5317\u6771','\u5357'];
-  var AI    = ['\u4e09\u78a7\u30fb\u56db\u7dd1\u6728\u661f','\u516d\u767d\u30fb\u4e03\u8d64\u91d1\u661f','\u4e00\u767d\u6c34\u661f\u30fb\u516b\u767d\u571f\u661f','\u4e00\u767d\u6c34\u661f\u30fb\u4e5d\u7d2b\u706b\u661f','\u306a\u3057','\u4e8c\u9ed2\u30fb\u516b\u767d\u571f\u661f','\u4e8c\u9ed2\u571f\u661f\u7cfb','\u4e09\u78a7\u6728\u661f\u7cfb','\u516d\u767d\u91d1\u661f\u7cfb'];
-  var MSGS  = ['\u6c34\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u304c\u6d41\u308c\u308b\u65e5\u3002\u51b7\u9759\u306a\u5224\u65ad\u3068\u67d4\u8edf\u306a\u5bfe\u5fdc\u304c\u5409\u3002','\u571f\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u3067\u5730\u306b\u8db3\u3092\u3064\u3051\u305f\u884c\u52d5\u3092\u3002\u30b3\u30c4\u30b3\u30c4\u304c\u5b9f\u3092\u7d50\u3076\u3002','\u6728\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u3067\u6d3b\u767a\u306a\u884c\u52d5\u304c\u5409\u3002\u65b0\u3057\u3044\u30b9\u30bf\u30fc\u30c8\u306b\u6700\u9069\u3002','\u6728\u306e\u5b89\u5b9a\u30a8\u30cd\u30eb\u30ae\u30fc\u3002\u4fe1\u983c\u95a2\u4fc2\u3092\u5927\u5207\u306b\u3059\u308b\u65e5\u3002','\u4e2d\u592e\u306e\u5f37\u3044\u30a8\u30cd\u30eb\u30ae\u30fc\u3002\u614e\u91cd\u306b\u884c\u52d5\u3059\u308b\u3053\u3068\u304c\u5927\u5207\u3002','\u91d1\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u3067\u30ea\u30fc\u30c0\u30fc\u30b7\u30c3\u30d7\u3092\u767a\u63ee\u3067\u304d\u308b\u65e5\u3002','\u91d1\u306e\u559c\u3073\u30a8\u30cd\u30eb\u30ae\u30fc\u3002\u4ea4\u6d41\u30fb\u9045\u3073\u306b\u5409\u306e\u65e5\u3002','\u571f\u306e\u5909\u5316\u30a8\u30cd\u30eb\u30ae\u30fc\u3002\u8ee2\u63db\u671f\u3092\u8fcf\u3048\u3084\u3059\u3044\u65e5\u3002','\u706b\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u3067\u76f4\u611f\u304c\u51b4\u3048\u308b\u3002\u82b8\u8853\u30fb\u5275\u9020\u306b\u5409\u3002'];
-  var honmeiIdx = (11 - (birth.getFullYear() % 9)) % 9;
-  var base = (today.getMonth()+1) >= 2 ? today.getFullYear() : today.getFullYear()-1;
-  var todayIdx = (11 - (base % 9)) % 9;
-  return { honmei:STARS[honmeiIdx], today:STARS[todayIdx], ai:AI[honmeiIdx], dir:DIRS[honmeiIdx], name:STARS[honmeiIdx], message:MSGS[honmeiIdx] };
+  var STARS=['一白水星','二黒土星','三碧木星','四緑木星','五黄土星','六白金星','七赤金星','八白土星','九紫火星'];
+  var DIRS =['北','南西','東','南東','中央','北西','西','北東','南'];
+  var AI   =['三碧・四緑木星','六白・七赤金星','一白・八白土星','一白・九紫火星','なし','二黒・八白土星','二黒土星系','三碧木星系','六白金星系'];
+  var MSGS =['水のエネルギーが流れる日。冷静な判断と柔軟な対応が吉。','土のエネルギーで地に足をつけた行動を。コツコツが実を結ぶ。','木のエネルギーで活発な行動が吉。新しいスタートに最適。','木の安定エネルギー。信頼関係を大切にする日。','中央の強いエネルギー。慎重に行動することが大切。','金のエネルギーでリーダーシップを発揮できる日。','金の喜びエネルギー。交流・遊びに吉の日。','土の変化エネルギー。転換期を迎えやすい日。','火のエネルギーで直感が冴える。芸術・創造に吉。'];
+  var hi=(11-(birth.getFullYear()%9))%9;
+  var base=(today.getMonth()+1)>=2?today.getFullYear():today.getFullYear()-1;
+  var ti=(11-(base%9))%9;
+  return{honmei:STARS[hi],today:STARS[ti],ai:AI[hi],dir:DIRS[hi],name:STARS[hi],message:MSGS[hi]};
 }
 
+// 四柱推命
 function calcShichu(today) {
-  var KAN  = ['\u7532','\u4e59','\u4e19','\u4e01','\u620a','\u5df1','\u5e9a','\u8f9b','\u58ec','\u7678'];
-  var SHI  = ['\u5b50','\u4e11','\u5bc5','\u536f','\u8fb0','\u5df3','\u5348','\u672a','\u7533','\u9149','\u620c','\u4ea5'];
-  var GK   = ['\u6728','\u6728','\u706b','\u706b','\u571f','\u571f','\u91d1','\u91d1','\u6c34','\u6c34'];
-  var GS   = ['\u6c34','\u571f','\u6728','\u6728','\u571f','\u706b','\u706b','\u571f','\u91d1','\u91d1','\u571f','\u6c34'];
-  var SHIN = ['\u6bd4\u80a9','\u52ab\u8ca1','\u98df\u795e','\u50b7\u5b98','\u504f\u8ca1','\u6b63\u8ca1','\u504f\u5b98','\u6b63\u5b98','\u504f\u5370','\u5370\u7db6'];
-  var MSGS = ['\u72ec\u7acb\u5fc3\u65fa\u76db\u306a\u65e5\u3002\u81ea\u5206\u306e\u30da\u30fc\u30b9\u3067\u9032\u3080\u3068\u5409\u3002','\u7af6\u4e89\u5fc3\u304c\u9ad8\u307e\u308b\u65e5\u3002\u5354\u8abf\u3082\u5fd8\u308c\u305a\u306b\u3002','\u5275\u9020\u6027\u304c\u9ad8\u307e\u308b\u65e5\u3002\u30a2\u30a4\u30c7\u30a2\u3092\u6d3b\u304b\u3057\u3066\u3002','\u8868\u73fe\u529b\u65fa\u76db\u3002\u4eba\u524d\u3067\u8a71\u3059\u3053\u3068\u306b\u5409\u3002','\u91d1\u904b\u4e0a\u6607\u306e\u5146\u3057\u3002\u67d4\u8edf\u306a\u5bfe\u5fdc\u304c\u8ca1\u3092\u751f\u3080\u3002','\u5805\u5b9f\u306a\u91d1\u904b\u306e\u65e5\u3002\u614e\u91cd\u306a\u6295\u8cc7\u5224\u65ad\u304c\u5409\u3002','\u884c\u52d5\u529b\u304c\u9ad8\u307e\u308b\u65e5\u3002\u30c1\u30e3\u30ec\u30f3\u30b8\u7cbe\u795e\u3067\u9032\u3081\u3002','\u793e\u4f1a\u7684\u4fe1\u7528\u3092\u5f97\u3084\u3059\u3044\u65e5\u3002\u8aa0\u5b9f\u306a\u884c\u52d5\u3092\u3002','\u77e5\u6075\u3068\u76f4\u611f\u304c\u51b4\u3048\u308b\u65e5\u3002\u5b66\u7fd2\u306b\u6700\u9069\u3002','\u77e5\u8b58\u3092\u5438\u53ce\u3057\u3084\u3059\u3044\u65e5\u3002\u30a4\u30f3\u30d7\u30c3\u30c8\u306b\u5c02\u5ff5\u3092\u3002'];
-  var base = new Date(1900,0,1);
-  var diff = Math.floor((today-base)/86400000);
-  var ki = ((diff%10)+10)%10, si = ((diff%12)+12)%12;
-  return { day:KAN[ki]+SHI[si], gogyo:GK[ki]+'\u30fb'+GS[si], shinkan:SHIN[ki], message:MSGS[ki] };
+  var KAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  var SHI=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  var GK =['木','木','火','火','土','土','金','金','水','水'];
+  var GS =['水','土','木','木','土','火','火','土','金','金','土','水'];
+  var SHN=['比肩','劫財','食神','傷官','偏財','正財','偏官','正官','偏印','印綬'];
+  var MSG=['独立心旺盛な日。自分のペースで進むと吉。','競争心が高まる日。協調も忘れずに。','創造性が高まる日。アイデアを活かして。','表現力旺盛。人前で話すことに吉。','金運上昇の兆し。柔軟な対応が財を生む。','堅実な金運の日。慎重な投資判断が吉。','行動力が高まる日。チャレンジ精神で進め。','社会的信用を得やすい日。誠実な行動を。','知恵と直感が冴える日。学習に最適。','知識を吸収しやすい日。インプットに専念を。'];
+  var base=new Date(1900,0,1);
+  var diff=Math.floor((today-base)/86400000);
+  var ki=((diff%10)+10)%10, si=((diff%12)+12)%12;
+  return{day:KAN[ki]+SHI[si],gogyo:GK[ki]+'・'+GS[si],shinkan:SHN[ki],message:MSG[ki]};
 }
 
+// 数秘術
 function calcSuuhi(birth, today) {
   function sumD(n){var s=0,str=String(n);for(var i=0;i<str.length;i++)s+=parseInt(str[i])||0;return s;}
   function reduce(n){while(n>9&&n!==11&&n!==22&&n!==33)n=sumD(n);return n;}
-  var life = reduce(birth.getFullYear()+(birth.getMonth()+1)+birth.getDate());
-  var day  = reduce(today.getDate()+(today.getMonth()+1));
+  var life=reduce(birth.getFullYear()+(birth.getMonth()+1)+birth.getDate());
+  var day=reduce(today.getDate()+(today.getMonth()+1));
   return reduce(life+day);
 }
-
 function getSuuhiDetail(n) {
-  var data = {
-    1:{keyword:'\u30ea\u30fc\u30c0\u30fc\u30b7\u30c3\u30d7\u30fb\u72ec\u7acb\u30fb\u59cb\u307e\u308a',message:'\u65b0\u3057\u3044\u3053\u3068\u3092\u59cb\u3081\u308b\u306e\u306b\u6700\u9069\u306a\u65e5\u3002\u81ea\u5206\u306e\u610f\u5fd7\u3092\u6301\u3063\u3066\u884c\u52d5\u3057\u307e\u3057\u3087\u3046\u3002'},
-    2:{keyword:'\u5354\u8abf\u30fb\u76f4\u611f\u30fb\u30d0\u30e9\u30f3\u30b9',message:'\u4eba\u9593\u95a2\u4fc2\u3092\u5927\u5207\u306b\u3059\u308b\u65e5\u3002\u76f8\u624b\u306e\u6c17\u6301\u3061\u306b\u654f\u611f\u306b\u306a\u308c\u307e\u3059\u3002'},
-    3:{keyword:'\u5275\u9020\u30fb\u8868\u73fe\u30fb\u559c\u3073',message:'\u5275\u9020\u529b\u304c\u9ad8\u307e\u308b\u65e5\u3002\u30a2\u30a4\u30c7\u30a2\u3092\u8868\u73fe\u3059\u308b\u3053\u3068\u3067\u904b\u6c17\u4e0a\u6607\u3002'},
-    4:{keyword:'\u5b89\u5b9a\u30fb\u52aa\u529b\u30fb\u57fa\u76e4',message:'\u5730\u9053\u306a\u4f5c\u696d\u306b\u5411\u3044\u3066\u3044\u308b\u65e5\u3002\u30b3\u30c4\u30b3\u30c4\u7a4d\u307f\u4e0a\u3052\u308b\u3053\u3068\u304c\u5927\u5207\u3002'},
-    5:{keyword:'\u81ea\u7531\u30fb\u5909\u5316\u30fb\u5192\u967a',message:'\u5909\u5316\u3092\u697d\u3057\u3080\u65e5\u3002\u65b0\u3057\u3044\u4f53\u9a13\u304c\u904b\u3092\u958b\u304d\u307e\u3059\u3002'},
-    6:{keyword:'\u611f\u8b1d\u30fb\u8cac\u4efb\u30fb\u5949\u4ed5',message:'\u5bb6\u65cf\u3084\u5927\u5207\u306a\u4eba\u3068\u306e\u6642\u9593\u306b\u5409\u3002\u601d\u3044\u3084\u308a\u304c\u904b\u3092\u547c\u3076\u3002'},
-    7:{keyword:'\u63a2\u6c42\u30fb\u77e5\u6075\u30fb\u5185\u7701',message:'\u5185\u7701\u3068\u5b66\u3073\u306b\u6700\u9069\u306a\u65e5\u3002\u76f4\u611f\u3092\u4fe1\u3058\u3066\u884c\u52d5\u3092\u3002'},
-    8:{keyword:'\u7e41\u6804\u30fb\u5b9f\u884c\u529b\u30fb\u7269\u8cea',message:'\u30d3\u30b8\u30cd\u30b9\u904b\u304c\u9ad8\u307e\u308b\u65e5\u3002\u7a4d\u6975\u7684\u306a\u884c\u52d5\u3067\u6210\u679c\u3092\u6389\u307f\u53d6\u308c\u3002'},
-    9:{keyword:'\u5b8c\u6210\u30fb\u5949\u4ed5\u30fb\u6148\u6094',message:'\u7269\u4e8b\u306e\u5b8c\u6210\u3084\u7de0\u3081\u304f\u304f\u308a\u306b\u5409\u3002\u4eba\u3078\u306e\u5949\u4ed5\u304c\u904b\u3092\u9ad8\u3081\u308b\u3002'},
-    11:{keyword:'\u76f4\u611f\u30fb\u7406\u60f3\u30fb\u554f\u793a',message:'\u9748\u611f\u3084\u76f4\u611f\u304c\u51b4\u3048\u308b\u7279\u5225\u306a\u65e5\u3002\u30a4\u30f3\u30b9\u30d4\u30ec\u30fc\u30b7\u30e7\u30f3\u3092\u5927\u5207\u306b\u3002'},
-    22:{keyword:'\u5927\u304d\u306a\u5922\u30fb\u73fe\u5b9f\u5316\u30fb\u30de\u30b9\u30bf\u30fc',message:'\u5927\u304d\u306a\u76ee\u6a19\u306b\u5411\u3051\u3066\u52d5\u304f\u3068\u5409\u3002\u73fe\u5b9f\u7684\u306a\u884c\u52d5\u304c\u5922\u3092\u5b9f\u73fe\u3059\u308b\u3002'},
-    33:{keyword:'\u30de\u30b9\u30bf\u30fc\u30fb\u5949\u4ed5\u30fb\u5b87\u5b99\u7684\u611f',message:'\u6700\u9ad8\u30ec\u30d9\u30eb\u306e\u5949\u4ed5\u3068\u611f\u306e\u65e5\u3002\u5468\u56f2\u3078\u306e\u512a\u3057\u3055\u304c\u904b\u3092\u958b\u304f\u3002'}
+  var data={
+    1:{keyword:'リーダーシップ・独立・始まり',message:'新しいことを始めるのに最適な日。自分の意志を持って行動しましょう。'},
+    2:{keyword:'協調・直感・バランス',message:'人間関係を大切にする日。相手の気持ちに敏感になれます。'},
+    3:{keyword:'創造・表現・喜び',message:'創造力が高まる日。アイデアを表現することで運気上昇。'},
+    4:{keyword:'安定・努力・基盤',message:'地道な作業に向いている日。コツコツ積み上げることが大切。'},
+    5:{keyword:'自由・変化・冒険',message:'変化を楽しむ日。新しい体験が運を開きます。'},
+    6:{keyword:'愛・責任・奉仕',message:'家族や大切な人との時間に吉。思いやりが運を呼ぶ。'},
+    7:{keyword:'探求・知恵・内省',message:'内省と学びに最適な日。直感を信じて行動を。'},
+    8:{keyword:'繁栄・実行力・物質',message:'ビジネス運が高まる日。積極的な行動で成果を掴め。'},
+    9:{keyword:'完成・奉仕・慈悲',message:'物事の完成や締めくくりに吉。人への奉仕が運を高める。'},
+    11:{keyword:'直感・理想・啓示',message:'霊感や直感が冴える特別な日。インスピレーションを大切に。'},
+    22:{keyword:'大きな夢・現実化',message:'大きな目標に向けて動くと吉。現実的な行動が夢を実現する。'},
+    33:{keyword:'マスター・奉仕・愛',message:'最高レベルの奉仕と愛の日。周囲への優しさが運を開く。'}
   };
-  return data[n] || {keyword:'\u7279\u5225\u306a\u6570\u5b57', message:'\u4eca\u65e5\u3082\u4e01\u5be7\u306b\u904e\u3054\u3057\u307e\u3057\u3087\u3046\u3002'};
+  return data[n]||{keyword:'特別な数字',message:'今日も丁寧に過ごしましょう。'};
 }
 
+// 六曜
 function calcRokuyo(today) {
-  var R = [
-    {name:'\u5927\u5b89',yomi:'\u305f\u3044\u3042\u3093',kikkyo:'\u5927\u5409',message:'\u4f55\u3092\u3059\u308b\u306b\u3082\u826f\u3044\u65e5\u3002\u7d50\u5a5a\u5f0f\u3084\u91cd\u8981\u306a\u5951\u7d04\u306b\u6700\u9069\u3002\u7a4d\u6975\u7684\u306b\u884c\u52d5\u3057\u307e\u3057\u3087\u3046\u3002'},
-    {name:'\u8d64\u53e3',yomi:'\u3057\u3083\u3063\u3053\u3046',kikkyo:'\u51f6\uff08\u6b63\u5348\u306e\u307f\u5409\uff09',message:'\u5348\u524d\u30fb\u5348\u5f8c\u306f\u51f6\u3001\u6b63\u5348\u306e\u307f\u5409\u3002\u91cd\u8981\u306a\u4e8b\u306f\u6b63\u5348\u524d\u5f8c\u306b\u3002\u706b\u3084\u5203\u7269\u306b\u6ce8\u610f\u3002'},
-    {name:'\u5148\u52dd',yomi:'\u305b\u3093\u3057\u3087\u3046',kikkyo:'\u5348\u524d\u5409\u30fb\u5348\u5f8c\u51f6',message:'\u5348\u524d\u4e2d\u306f\u5409\u3002\u6025\u3050\u3053\u3068\u306b\u5411\u3044\u305f\u65e5\u3002\u5348\u5f8c\u306f\u9759\u304b\u306b\u904e\u3054\u3059\u306e\u304c\u5409\u3002'},
-    {name:'\u53cb\u5f15',yomi:'\u3068\u3082\u3073\u304d',kikkyo:'\u671d\u5915\u5409\u30fb\u663c\u51f6',message:'\u52dd\u8ca0\u306a\u3057\u3001\u5f15\u304d\u5206\u3051\u306e\u65e5\u3002\u53cb\u3092\u5e78\u305b\u306b\u5f15\u304d\u8fbc\u3080\u65e5\u3068\u3082\u3002\u846c\u5100\u306f\u907f\u3051\u308b\u3002'},
-    {name:'\u5148\u8ca0',yomi:'\u305b\u3093\u3077',kikkyo:'\u5348\u524d\u51f6\u30fb\u5348\u5f8c\u5409',message:'\u5348\u524d\u4e2d\u306f\u51f6\u3001\u5348\u5f8c\u304b\u3089\u5409\u3002\u9759\u304b\u306b\u904e\u3054\u3057\u6025\u304c\u306a\u3044\u3053\u3068\u304c\u5927\u5207\u3002'},
-    {name:'\u4ecf\u6ec5',yomi:'\u3076\u3064\u3081\u3064',kikkyo:'\u51f6',message:'\u516d\u66dc\u306e\u4e2d\u3067\u6700\u3082\u51f6\u306e\u65e5\u3068\u3055\u308c\u308b\u3002\u305f\u3060\u3057\u65b0\u3057\u3044\u59cb\u307e\u308a\u306e\u65e5\u3068\u3082\u3002\u7269\u4e8b\u306f\u614e\u91cd\u306b\u3002'}
+  var R=[
+    {name:'大安',yomi:'たいあん',kikkyo:'大吉',message:'何をするにも良い日。結婚式や重要な契約に最適。積極的に行動しましょう。'},
+    {name:'赤口',yomi:'しゃっこう',kikkyo:'凶（正午のみ吉）',message:'午前・午後は凶、正午のみ吉。重要な事は正午前後に。火や刃物に注意。'},
+    {name:'先勝',yomi:'せんしょう',kikkyo:'午前吉・午後凶',message:'午前中は吉。急ぐことに向いた日。午後は静かに過ごすのが吉。'},
+    {name:'友引',yomi:'ともびき',kikkyo:'朝夕吉・昼凶',message:'勝負事なし、引き分けの日。友を幸せに引き込む日とも。葬儀は避ける。'},
+    {name:'先負',yomi:'せんぷ',kikkyo:'午前凶・午後吉',message:'午前中は凶、午後から吉。静かに過ごし急がないことが大切。'},
+    {name:'仏滅',yomi:'ぶつめつ',kikkyo:'凶',message:'六曜の中で最も凶の日とされる。ただし新しい始まりの日とも。物事は慎重に。'}
   ];
   var y=today.getFullYear(),m=today.getMonth()+1,d=today.getDate();
   if(m<=2){y--;m+=12;}
   var jd=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d-1524;
-  var lf=((jd-2451550.5)/29.53059)%1; if(lf<0)lf+=1;
+  var lf=((jd-2451550.5)/29.53059)%1;if(lf<0)lf+=1;
   var idx=((Math.floor(lf*30)+(m-1))%6+6)%6;
   return R[idx];
 }
 
+// 十二直
 function calcJunichoku(today) {
-  var J = [
-    {name:'\u5efa\uff08\u305f\u3064\uff09',yomi:'\u305f\u3064',kikkyo:'\u5927\u5409',message:'\u4e07\u7269\u3092\u5efa\u3066\u751f\u3058\u308b\u65e5\u3002\u65b0\u898f\u4e8b\u696d\u30fb\u65c5\u884c\u30fb\u5a5a\u793c\u306b\u5927\u5409\u3002\u571f\u3092\u52d5\u304b\u3059\u3053\u3068\u306f\u907f\u3051\u3066\u3002'},
-    {name:'\u9664\uff08\u306e\u305e\u304f\uff09',yomi:'\u306e\u305e\u304f',kikkyo:'\u4e2d\u5409',message:'\u4e0d\u6d44\u30fb\u969c\u5bb3\u3092\u53d6\u308a\u9664\u304f\u65e5\u3002\u7a2e\u307e\u304d\u30fb\u7642\u990a\u958b\u59cb\u30fb\u6383\u9664\u306b\u5409\u3002\u846c\u5100\u306f\u51f6\u3002'},
-    {name:'\u6e80\uff08\u307f\u3064\uff09',yomi:'\u307f\u3064',kikkyo:'\u5927\u5409',message:'\u7269\u4e8b\u304c\u6e80\u3061\u308b\u5409\u65e5\u3002\u79fb\u8ee2\u30fb\u958b\u696d\u30fb\u7d50\u5a5a\u306b\u6700\u9069\u3002\u8a34\u8a1f\u30fb\u4e89\u3044\u306f\u51f6\u3002'},
-    {name:'\u5e73\uff08\u305f\u3044\u3089\uff09',yomi:'\u305f\u3044\u3089',kikkyo:'\u4e2d\u5409',message:'\u7269\u4e8b\u304c\u5e73\u3089\u304b\u306b\u306a\u308b\u65e5\u3002\u65c5\u884c\u30fb\u9053\u8def\u5de5\u4e8b\u306b\u5409\u3002\u7a74\u6398\u308a\u306f\u51f6\u3002'},
-    {name:'\u5b9a\uff08\u3055\u3060\u3093\uff09',yomi:'\u3055\u3060\u3093',kikkyo:'\u4e2d\u5409',message:'\u7269\u4e8b\u3092\u5b9a\u3081\u308b\u65e5\u3002\u5efa\u7bc9\u30fb\u958b\u5e97\u30fb\u5951\u7d04\u306b\u5409\u3002\u4e89\u3044\u3054\u3068\u306f\u51f6\u3002'},
-    {name:'\u57f7\uff08\u3068\u308b\uff09',yomi:'\u3068\u308b',kikkyo:'\u4e2d\u5409',message:'\u7269\u4e8b\u3092\u57f7\u308a\u884c\u3046\u65e5\u3002\u796d\u7940\u30fb\u8fb2\u4f5c\u696d\u306b\u5409\u3002\u8ca1\u7269\u306e\u51fa\u3057\u5165\u308c\u306f\u51f6\u3002'},
-    {name:'\u7834\uff08\u3084\u3076\u308b\uff09',yomi:'\u3084\u3076\u308b',kikkyo:'\u51f6',message:'\u7269\u4e8b\u3092\u6253\u3061\u7834\u308b\u65e5\u3002\u8a34\u8a1f\u30fb\u6f01\u696d\u306b\u5409\u3002\u5a5a\u793c\u30fb\u958b\u5e97\u306f\u5927\u51f6\u3002'},
-    {name:'\u5371\uff08\u3042\u3084\u3076\uff09',yomi:'\u3042\u3084\u3076',kikkyo:'\u51f6',message:'\u7269\u4e8b\u304c\u5371\u3046\u306a\u308b\u65e5\u3002\u5b89\u9759\u306b\u904e\u3054\u3059\u306e\u304c\u5409\u3002\u767b\u5c71\u30fb\u65c5\u884c\u306f\u51f6\u3002'},
-    {name:'\u6210\uff08\u306a\u308b\uff09',yomi:'\u306a\u308b',kikkyo:'\u5927\u5409',message:'\u7269\u4e8b\u304c\u6210\u5c31\u3059\u308b\u5409\u65e5\u3002\u958b\u5e97\u30fb\u5a5a\u793c\u30fb\u79fb\u8ee2\u306b\u5927\u5409\u3002\u8a34\u8a1f\u306f\u51f6\u3002'},
-    {name:'\u53ce\uff08\u304a\u3055\u3093\uff09',yomi:'\u304a\u3055\u3093',kikkyo:'\u4e2d\u5409',message:'\u7269\u4e8b\u3092\u53ce\u3081\u308b\u65e5\u3002\u7a40\u7269\u306e\u53d6\u308a\u5165\u308c\u30fb\u53ce\u7a6b\u306b\u5409\u3002\u846c\u5100\u306f\u51f6\u3002'},
-    {name:'\u958b\uff08\u3072\u3089\u304f\uff09',yomi:'\u3072\u3089\u304f',kikkyo:'\u5927\u5409',message:'\u7269\u4e8b\u3092\u958b\u304f\u5409\u65e5\u3002\u958b\u5e97\u30fb\u79fb\u8ee2\u30fb\u5a5a\u793c\u306b\u5927\u5409\u3002\u846c\u5100\u30fb\u571f\u6728\u306f\u51f6\u3002'},
-    {name:'\u9589\uff08\u3068\u3065\uff09',yomi:'\u3068\u3065',kikkyo:'\u51f6',message:'\u7269\u4e8b\u3092\u9589\u3058\u308b\u65e5\u3002\u91d1\u8535\u30fb\u7a74\u8535\u9589\u3058\u306b\u5409\u3002\u79fb\u8ee2\u30fb\u65c5\u884c\u306f\u51f6\u3002'}
+  var J=[
+    {name:'建（たつ）',yomi:'たつ',kikkyo:'大吉',message:'万物を建て生じる日。新規事業・旅行・婚礼に大吉。ただし土を動かすことは避けて。'},
+    {name:'除（のぞく）',yomi:'のぞく',kikkyo:'中吉',message:'不浄・障害を取り除く日。種まき・療養開始・掃除に吉。葬儀は凶。'},
+    {name:'満（みつ）',yomi:'みつ',kikkyo:'大吉',message:'物事が満ちる吉日。移転・開業・結婚に最適。訴訟・争いは凶。'},
+    {name:'平（たいら）',yomi:'たいら',kikkyo:'中吉',message:'物事が平らかになる日。旅行・道路工事に吉。穴掘りは凶。'},
+    {name:'定（さだん）',yomi:'さだん',kikkyo:'中吉',message:'物事を定める日。建築・開店・契約に吉。争いごとは凶。'},
+    {name:'執（とる）',yomi:'とる',kikkyo:'中吉',message:'物事を執り行う日。祭祀・農作業に吉。財物の出し入れは凶。'},
+    {name:'破（やぶる）',yomi:'やぶる',kikkyo:'凶',message:'物事を打ち破る日。訴訟・漁業に吉。婚礼・開店は大凶。'},
+    {name:'危（あやぶ）',yomi:'あやぶ',kikkyo:'凶',message:'物事が危うくなる日。安静に過ごすのが吉。登山・旅行は凶。'},
+    {name:'成（なる）',yomi:'なる',kikkyo:'大吉',message:'物事が成就する吉日。開店・婚礼・移転に大吉。訴訟は凶。'},
+    {name:'収（おさん）',yomi:'おさん',kikkyo:'中吉',message:'物事を収める日。穀物の取り入れ・収穫に吉。葬儀は凶。'},
+    {name:'開（ひらく）',yomi:'ひらく',kikkyo:'大吉',message:'物事を開く吉日。開店・移転・婚礼に大吉。葬儀・土木は凶。'},
+    {name:'閉（とづ）',yomi:'とづ',kikkyo:'凶',message:'物事を閉じる日。金蔵・穴蔵閉じに吉。移転・旅行は凶。'}
   ];
-  var base = new Date(2024,0,6);
-  var diff = Math.floor((today-base)/86400000);
-  var idx = ((diff%12)+12)%12;
-  return J[idx];
+  var base=new Date(2024,0,6);
+  var diff=Math.floor((today-base)/86400000);
+  return J[((diff%12)+12)%12];
 }
 
 function starsStr(score) {
-  var n = Math.round(score/20);
-  if (n<1) n=1; if (n>5) n=5;
-  var s=''; for(var i=0;i<n;i++)s+='\u2605'; for(var j=n;j<5;j++)s+='\u2606'; return s;
+  var n=Math.round(score/20);if(n<1)n=1;if(n>5)n=5;
+  var s='';for(var i=0;i<n;i++)s+='★';for(var j=n;j<5;j++)s+='☆';return s;
 }
-
-function syncSign() {
-  el('astroQ').textContent = calcRokuyo(TODAY).name;
-  el('mySignIco').textContent = '\ud83d\udd2e';
-}
-
-function renderAstro() {
-  var birth = getFortuneBirth();
-  el('fortuneBirth').value = birth.getFullYear() + '-' +
-    String(birth.getMonth()+1).padStart(2,'0') + '-' +
-    String(birth.getDate()).padStart(2,'0');
-  renderFortunePage();
-}
-
-// ============================================================
 // チェックリスト
 // ============================================================
 function renderCheck() {
