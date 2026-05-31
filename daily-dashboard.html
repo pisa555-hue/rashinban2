@@ -199,12 +199,28 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <section class="sec on" id="sec-today">
   <div class="g2">
-    <div class="mc" onclick="goSec('bio')"><div class="mc-ico">🌊</div><div class="mc-ttl">バイオリズム</div><div class="mc-val" id="bioQ">-</div><div class="mc-sub">体/感/知</div></div>
-    <div class="mc" onclick="goSec('astro')"><div class="mc-ico" id="mySignIco">♌</div><div class="mc-ttl">獅子座 今日</div><div class="mc-val" id="astroQ">-</div><div class="mc-sub">吉久昌志</div></div>
+    <div class="mc" onclick="goSec('bio')"><div class="mc-ico">🌊</div><div class="mc-ttl">バイオリズム</div><div class="mc-val" id="bioQ">-</div><div class="mc-sub" id="bioQSub">体/感/知/直</div></div>
+    <div class="mc" onclick="goSec('astro')"><div class="mc-ico" id="mySignIco">🔮</div><div class="mc-ttl">今日の占い</div><div class="mc-val" id="astroQ">-</div><div class="mc-sub">タップで詳細</div></div>
     <div class="mc" onclick="goSec('check')"><div class="mc-ico">✅</div><div class="mc-ttl">チェックリスト</div><div class="mc-val" id="checkQ">0/8</div><div class="mc-sub">本日の達成</div></div>
     <div class="mc" onclick="goSec('nippo')"><div class="mc-ico">🚕</div><div class="mc-ttl">前回乗務</div><div class="mc-val" id="lastSales">-</div><div class="mc-sub" id="lastDate">-</div></div>
   </div>
+
+  <!-- バイオリズム4波 -->
+  <div class="card">
+    <div class="card-ttl">バイオリズム — 今日</div>
+    <div id="todayBioRows"></div>
+  </div>
+
+  <!-- 今日の暦・日柄 -->
+  <div class="card">
+    <div class="card-ttl">今日の暦</div>
+    <div id="todayKoyomi"></div>
+  </div>
+
+  <!-- 運勢 -->
   <div class="card"><div class="card-ttl">今日の運勢</div><div id="fortuneRows"></div><div class="sep"></div><div id="fortuneMsg" style="font-size:12px;color:var(--muted);line-height:1.8;"></div></div>
+
+  <!-- 開運情報 -->
   <div class="card">
     <div class="card-ttl">開運情報</div>
     <div class="compass-wrap">
@@ -230,6 +246,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
     </div>
   </div>
+
   <div class="card"><div class="card-ttl">今日の予定</div><div id="todaySch"></div></div>
   <div class="card"><div class="card-ttl">家族・記念日</div><div id="familyToday"></div></div>
 </section>
@@ -244,7 +261,36 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="cg" id="calHdr"></div>
     <div class="cg" id="calGrid" style="margin-top:3px;"></div>
   </div>
-  <div class="card"><div class="card-ttl">スケジュール</div><div id="schList"></div></div>
+
+  <!-- 日付詳細パネル（タップで表示） -->
+  <div id="dayDetail" style="display:none;">
+    <div class="card" style="background:rgba(201,168,76,0.05);border-color:var(--gold);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Shippori Mincho',serif;font-size:16px;" id="dayDetailTitle"></div>
+        <button onclick="closeDayDetail()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);">✕</button>
+      </div>
+      <div id="dayDetailKoyomi" style="margin-bottom:10px;"></div>
+      <div id="dayDetailEvents"></div>
+      <button onclick="openAddFromDay()" style="width:100%;margin-top:10px;padding:10px;background:none;border:1px dashed var(--border);border-radius:2px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;">＋ この日に予定を追加</button>
+    </div>
+  </div>
+
+  <!-- 自分のスケジュール -->
+  <div class="card">
+    <div class="card-ttl">自分のスケジュール</div>
+    <div id="schList"></div>
+  </div>
+
+  <!-- 家族のスケジュール（折りたたみ） -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleFamSch()">
+      <div class="card-ttl" style="margin:0;">家族のスケジュール</div>
+      <div id="famSchArrow" style="font-size:18px;color:var(--muted);">▶</div>
+    </div>
+    <div id="famSchBody" style="display:none;margin-top:12px;">
+      <div id="famSchList"></div>
+    </div>
+  </div>
 </section>
 
 <section class="sec" id="sec-bio">
@@ -263,9 +309,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="bio-card"><div class="bio-ico">💪</div><div class="bio-nm">身体</div><div class="bio-val" id="bPh" style="color:#e74c3c">-</div><div class="bio-st" id="bPhS">-</div></div>
     <div class="bio-card"><div class="bio-ico">💙</div><div class="bio-nm">感情</div><div class="bio-val" id="bEm" style="color:#3498db">-</div><div class="bio-st" id="bEmS">-</div></div>
     <div class="bio-card"><div class="bio-ico">🧠</div><div class="bio-nm">知性</div><div class="bio-val" id="bIn" style="color:#f39c12">-</div><div class="bio-st" id="bInS">-</div></div>
+    <div class="bio-card"><div class="bio-ico">✨</div><div class="bio-nm">直感</div><div class="bio-val" id="bIt" style="color:#9b59b6">-</div><div class="bio-st" id="bItS">-</div></div>
   </div>
   <div class="card" style="margin-top:11px;"><div class="card-ttl">今日のアドバイス</div><div id="bioAdv" style="font-size:12px;line-height:1.9;"></div></div>
-  <div class="card"><div class="card-ttl">家族のバイオリズム</div><div id="famBio"></div></div>
+
+  <!-- 家族バイオリズム（折りたたみ） -->
+  <div class="card" style="margin-top:4px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleFamBioPage()">
+      <div class="card-ttl" style="margin:0;">家族のバイオリズム</div>
+      <div id="famBioPageArrow" style="font-size:18px;color:var(--muted);">▶</div>
+    </div>
+    <div id="famBioPage" style="display:none;margin-top:12px;">
+      <div id="famBioPageBody"></div>
+    </div>
+  </div>
 </section>
 
 <section class="sec" id="sec-astro">
@@ -579,8 +636,200 @@ function starsStr(score) {
 function el(id) { return document.getElementById(id); }
 
 // ============================================================
-// ヘッダー
+// 今日タブ追加表示
 // ============================================================
+function renderTodayBio() {
+  var ph   = bioVal(PROFILE_BIRTH, TODAY, 23);
+  var em   = bioVal(PROFILE_BIRTH, TODAY, 28);
+  var intel= bioVal(PROFILE_BIRTH, TODAY, 33);
+  var intu = bioVal(PROFILE_BIRTH, TODAY, 38);
+  var rows = [
+    { lbl:'💪 身体',  val:ph,    color:'#e74c3c' },
+    { lbl:'💙 感情',  val:em,    color:'#3498db' },
+    { lbl:'🧠 知性',  val:intel, color:'#f39c12' },
+    { lbl:'✨ 直感',  val:intu,  color:'#9b59b6' }
+  ];
+  var h = '';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var pct = Math.round(r.val * 100);
+    var bw  = Math.round((r.val + 1) / 2 * 100);
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+    h += '<span style="font-size:11px;width:52px;flex:none;color:var(--muted)">' + r.lbl + '</span>';
+    h += '<div style="flex:1;height:5px;background:rgba(0,0,0,0.07);border-radius:3px;overflow:hidden">';
+    h += '<div style="height:100%;width:' + bw + '%;background:' + r.color + ';border-radius:3px;transition:width .8s ease;"></div></div>';
+    h += '<span style="font-size:11px;color:' + r.color + ';flex:none;width:52px;text-align:right">' + (pct>=0?'+':'') + pct + '% ' + bioSt(r.val) + '</span>';
+    h += '</div>';
+  }
+  var bioEl = el('todayBioRows');
+  if (bioEl) bioEl.innerHTML = h;
+}
+
+function renderTodayKoyomi() {
+  var koyomiEl = el('todayKoyomi');
+  if (!koyomiEl) return;
+  var ry = calcRokuyo(TODAY);
+  var jd = calcJunichoku(TODAY);
+  var sh = calcShichu(TODAY);
+  var sl = calcSenjistu(TODAY);
+
+  var rows = [
+    { lbl:'六曜',   val: ry.name + '（' + ry.yomi + '）　' + ry.kikkyo },
+    { lbl:'干支',   val: sh.day },
+    { lbl:'十二直', val: jd.name + '　' + jd.kikkyo },
+    { lbl:'選日',   val: sl || 'なし' },
+  ];
+  var h = '';
+  for (var i = 0; i < rows.length; i++) {
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(201,168,76,0.1);">';
+    h += '<span style="font-size:10px;color:var(--muted);flex:none;width:48px;">' + rows[i].lbl + '</span>';
+    h += '<span style="font-family:\'Shippori Mincho\',serif;font-size:13px;text-align:right;flex:1;">' + rows[i].val + '</span>';
+    h += '</div>';
+  }
+  koyomiEl.innerHTML = h;
+}
+
+// 選日の計算（一粒万倍日・天赦日・母倉日など）
+function calcSenjistu(today) {
+  var results = [];
+  var m = today.getMonth() + 1;
+  var d = today.getDate();
+  var dow = today.getDay();
+
+  // 一粒万倍日（月によって特定の干支の日）
+  var sh = calcShichu(today);
+  var ICHIRYUU = {
+    1:['子','丑'], 2:['寅','卯'], 3:['子','卯'], 4:['午','未'],
+    5:['卯','辰'], 6:['酉','戌'], 7:['午','未'], 8:['子','丑'],
+    9:['卯','辰'], 10:['酉','戌'], 11:['午','未'], 12:['卯','辰']
+  };
+  var SHI_LIST = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  var base = new Date(1900,0,1);
+  var diff = Math.floor((today - base) / 86400000);
+  var shiIdx = ((diff % 12) + 12) % 12;
+  var shiName = SHI_LIST[shiIdx];
+  var monthList = ICHIRYUU[m] || [];
+  for (var i = 0; i < monthList.length; i++) {
+    if (monthList[i] === shiName) { results.push('一粒万倍日'); break; }
+  }
+
+  // 天赦日（年に数日のみ）
+  var TENSYA = ['2026-01-11','2026-03-26','2026-06-10','2026-08-25','2026-11-08'];
+  var dstr = ds(today);
+  for (var j = 0; j < TENSYA.length; j++) {
+    if (TENSYA[j] === dstr) { results.push('天赦日'); break; }
+  }
+
+  // 寅の日（12日に一度、金運吉）
+  var kanIdx = ((diff % 10) + 10) % 10;
+  var KAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  if (shiName === '寅') results.push('寅の日（金運吉）');
+
+  // 巳の日（弁財天の縁日）
+  if (shiName === '巳') results.push('巳の日（金運・芸能吉）');
+
+  return results.length > 0 ? results.join('・') : '';
+}
+
+// ============================================================
+// カレンダー日付詳細
+// ============================================================
+var selectedDayStr = '';
+
+function showDayDetail(dstr) {
+  selectedDayStr = dstr;
+  var dt = new Date(dstr + 'T00:00:00');
+  var wd = ['日','月','火','水','木','金','土'];
+  el('dayDetailTitle').textContent = (dt.getMonth()+1) + '月' + dt.getDate() + '日（' + wd[dt.getDay()] + '）';
+
+  // 暦情報
+  var tempToday = dt;
+  var ry = calcRokuyo(tempToday);
+  var jd = calcJunichoku(tempToday);
+  var sh = calcShichu(tempToday);
+  var sl = calcSenjistu(tempToday);
+  var kh = '<div style="font-size:11px;color:var(--muted);line-height:2;">';
+  kh += '六曜：<span style="color:var(--ink)">' + ry.name + '</span>　';
+  kh += '干支：<span style="color:var(--ink)">' + sh.day + '</span>　';
+  kh += '十二直：<span style="color:var(--ink)">' + jd.name + '</span>';
+  if (sl) kh += '　<span style="color:var(--gold)">' + sl + '</span>';
+  kh += '</div>';
+  el('dayDetailKoyomi').innerHTML = kh;
+
+  // その日のイベント
+  var evs = [];
+  for (var i = 0; i < events.length; i++) { if (events[i].date === dstr) evs.push(events[i]); }
+  evs.sort(function(a,b){ return a.time > b.time ? 1 : -1; });
+  var eh = '';
+  if (evs.length === 0) {
+    eh = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px 0;">予定なし</div>';
+  } else {
+    for (var j = 0; j < evs.length; j++) {
+      var ev = evs[j];
+      var tc = {work:'tag-work',personal:'tag-personal',health:'tag-health',family:'tag-family'}[ev.category]||'tag-work';
+      eh += '<div class="sch-item">';
+      eh += '<div class="sch-time">' + (ev.time||'終日') + '</div>';
+      eh += '<div class="sch-body"><div class="sch-ttl">' + ev.title + '</div>';
+      if (ev.note) eh += '<div class="sch-det">' + ev.note + '</div>';
+      eh += '<span class="tag ' + tc + '">' + ({work:'仕事',personal:'プライベート',health:'健康',family:'家族'}[ev.category]||'仕事') + '</span>';
+      eh += '</div></div>';
+    }
+  }
+  el('dayDetailEvents').innerHTML = eh;
+  el('dayDetail').style.display = 'block';
+  el('dayDetail').scrollIntoView({ behavior:'smooth' });
+}
+
+function closeDayDetail() {
+  el('dayDetail').style.display = 'none';
+  selectedDayStr = '';
+}
+
+function openAddFromDay() {
+  el('evDate').value = selectedDayStr;
+  openAdd();
+}
+
+// 家族スケジュール折りたたみ
+function toggleFamSch() {
+  var body  = el('famSchBody');
+  var arrow = el('famSchArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+    renderFamSchedule();
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
+  }
+}
+
+function renderFamSchedule() {
+  var famEvs = [];
+  for (var i = 0; i < events.length; i++) {
+    if (events[i].category === 'family') famEvs.push(events[i]);
+  }
+  famEvs.sort(function(a,b){ return (a.date+a.time) > (b.date+b.time) ? 1 : -1; });
+  var listEl = el('famSchList');
+  if (!famEvs.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">家族の予定はありません</div>';
+    return;
+  }
+  var wd = ['日','月','火','水','木','金','土'];
+  var h = '';
+  for (var j = 0; j < famEvs.length; j++) {
+    var ev = famEvs[j];
+    var dt = new Date(ev.date + 'T00:00:00');
+    h += '<div class="sch-item">';
+    h += '<div class="sch-time">' + (dt.getMonth()+1) + '/' + dt.getDate() + '<br>' + (ev.time||'終日') + '</div>';
+    h += '<div class="sch-body"><div class="sch-ttl">' + ev.title + '</div>';
+    if (ev.note) h += '<div class="sch-det">' + ev.note + '</div>';
+    h += '</div></div>';
+  }
+  listEl.innerHTML = h;
+}
+
+
 function renderHeader() {
   var wd = ['日','月','火','水','木','金','土'];
   var ry = ['大安','赤口','先勝','友引','先負','仏滅'];
@@ -746,7 +995,13 @@ function renderCalendar() {
     for (var e = 0; e < events.length; e++) { if (events[e].date === dstr) { hasEv = true; break; } }
     if (hasEv) { var dot = document.createElement('div'); dot.className = 'cd-dot'; cell.appendChild(dot); }
     (function(dstrCopy) {
-      cell.onclick = function() { el('evDate').value = dstrCopy; openAdd(); };
+      cell.onclick = function() {
+        if (el('sec-calendar').classList.contains('on')) {
+          showDayDetail(dstrCopy);
+        } else {
+          el('evDate').value = dstrCopy; openAdd();
+        }
+      };
     })(dstr);
     grid.appendChild(cell);
   }
@@ -849,10 +1104,12 @@ function renderBio() {
   var ph    = bioVal(PROFILE_BIRTH, TODAY, 23);
   var em    = bioVal(PROFILE_BIRTH, TODAY, 28);
   var intel = bioVal(PROFILE_BIRTH, TODAY, 33);
+  var intu  = bioVal(PROFILE_BIRTH, TODAY, 38);
   el('bPh').textContent  = bioFmt(ph);    el('bPhS').textContent = bioSt(ph);
   el('bEm').textContent  = bioFmt(em);    el('bEmS').textContent = bioSt(em);
   el('bIn').textContent  = bioFmt(intel); el('bInS').textContent = bioSt(intel);
-  el('bioQ').textContent = Math.round(ph*100) + '/' + Math.round(em*100) + '/' + Math.round(intel*100);
+  el('bIt').textContent  = bioFmt(intu);  el('bItS').textContent = bioSt(intu);
+  el('bioQ').textContent = Math.round(ph*100) + '/' + Math.round(em*100) + '/' + Math.round(intel*100) + '/' + Math.round(intu*100);
   var adv = [];
   if (ph < -0.3)      adv.push('身体は低調期。無理な運動は避け十分な休息を。');
   else if (ph > 0.5)  adv.push('身体絶好調！運動や体力仕事に最適な日。');
@@ -860,33 +1117,65 @@ function renderBio() {
   else if (em > 0.5)  adv.push('感情リズム高め。コミュニケーションに積極的に。');
   if (intel < -0.3)   adv.push('知的活動は低調。大局的な思考を優先して。');
   else if (intel > 0.5) adv.push('知性リズム高峰！企画・学習に絶好のタイミング。');
+  if (intu < -0.3)    adv.push('直感が揺らぎやすい。慎重な判断を心がけて。');
+  else if (intu > 0.5) adv.push('直感が冴えています！インスピレーションを大切に。');
   el('bioAdv').textContent = adv.length ? adv.join('　') : 'バランスのとれた良い状態です。積極的に動きましょう。';
-  var famH = '';
-  for (var i = 0; i < FAMILY.length; i++) {
-    var f = FAMILY[i];
-    var fp = bioVal(f.birth, TODAY, 23);
-    var fe = bioVal(f.birth, TODAY, 28);
-    var fi = bioVal(f.birth, TODAY, 33);
-    famH += '<div style="padding:10px 0;border-bottom:1px solid var(--border);">';
-    famH += '<div style="font-size:12px;font-weight:700;margin-bottom:6px">' + f.name + '</div>';
-    famH += '<div style="display:flex;gap:14px;font-size:11px;">';
-    famH += '<span style="color:#e74c3c">💪 ' + bioFmt(fp) + '</span>';
-    famH += '<span style="color:#3498db">💙 ' + bioFmt(fe) + '</span>';
-    famH += '<span style="color:#f39c12">🧠 ' + bioFmt(fi) + '</span>';
-    famH += '</div></div>';
+}
+
+function toggleFamBioPage() {
+  var body  = el('famBioPage');
+  var arrow = el('famBioPageArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+    renderFamBioPage();
+    setTimeout(function() { drawFamBioCharts(); }, 60);
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
   }
-  el('famBio').innerHTML = famH;
+}
+
+function renderFamBioPage() {
+  var h = '';
+  for (var i = 0; i < PERSONS.length; i++) {
+    var p = PERSONS[i];
+    var birth = new Date(p.birth + 'T00:00:00');
+    var ph = bioVal(birth,TODAY,23), em = bioVal(birth,TODAY,28);
+    var intel = bioVal(birth,TODAY,33), intu = bioVal(birth,TODAY,38);
+    h += '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">';
+    h += '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;color:var(--gold);margin-bottom:8px;">' + p.name + '</div>';
+    h += '<canvas id="famBioCv' + i + '" style="width:100%;height:100px;"></canvas>';
+    h += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:10px;">';
+    h += '<span style="color:#e74c3c">💪 ' + bioFmt(ph) + ' ' + bioSt(ph) + '</span>';
+    h += '<span style="color:#3498db">💙 ' + bioFmt(em) + ' ' + bioSt(em) + '</span>';
+    h += '<span style="color:#f39c12">🧠 ' + bioFmt(intel) + ' ' + bioSt(intel) + '</span>';
+    h += '<span style="color:#9b59b6">✨ ' + bioFmt(intu) + ' ' + bioSt(intu) + '</span>';
+    h += '</div></div>';
+  }
+  el('famBioPageBody').innerHTML = h;
+}
+
+function drawFamBioCharts() {
+  for (var i = 0; i < PERSONS.length; i++) {
+    var cv = el('famBioCv' + i);
+    if (!cv) continue;
+    var p = PERSONS[i];
+    var birth = new Date(p.birth + 'T00:00:00');
+    drawBioChartOn(cv, birth);
+  }
 }
 
 function drawBioChart() {
-  var cv = el('bioCv');
+  drawBioChartOn(el('bioCv'), PROFILE_BIRTH);
+}
+
+function drawBioChartOn(cv, birth) {
   var dpr = window.devicePixelRatio || 1;
   var W = cv.offsetWidth, H = cv.offsetHeight;
   if (!W || !H) return;
   cv.width = W * dpr; cv.height = H * dpr;
-  var ctx = cv.getContext('2d');
-  ctx.scale(dpr, dpr);
-  var birth = PROFILE_BIRTH;
+  var ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
   var start = new Date(TODAY.getTime() - 14 * 86400000);
   var days = 28, dw = W / days;
   ctx.clearRect(0, 0, W, H);
@@ -905,12 +1194,12 @@ function drawBioChart() {
   for (var wi = 0; wi < waves.length; wi++) {
     var wv = waves[wi];
     ctx.strokeStyle = wv.c; ctx.lineWidth = wv.w; ctx.beginPath();
-    for (var pi = 0; pi <= days * 4; pi++) {
-      var frac = pi / 4;
+    for (var pi2 = 0; pi2 <= days * 4; pi2++) {
+      var frac = pi2 / 4;
       var d = new Date(start.getTime() + frac * 86400000);
       var v = bioVal(birth, d, wv.p);
       var x = frac * dw, y = H/2 - v * (H/2 - 8);
-      if (pi === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      if (pi2 === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
@@ -1789,7 +2078,7 @@ function goSec(id) {
   var tabs = document.querySelectorAll('.tab');
   for (var j = 0; j < tabs.length; j++) tabs[j].classList.toggle('on', tabs[j].getAttribute('data-sec') === id);
   el('fab').style.display = id === 'calendar' ? 'flex' : 'none';
-  if (id === 'bio')     setTimeout(drawBioChart, 60);
+  if (id === 'bio')     setTimeout(function() { drawBioChart(); }, 60);
   if (id === 'nippo')   renderNippo();
   if (id === 'monthly') {
     var ym = TODAY.getFullYear() + '-' + String(TODAY.getMonth()+1).padStart(2,'0');
@@ -1808,6 +2097,8 @@ window.onload = function() {
   renderFortune();
   renderLucky();
   renderFamilyToday();
+  renderTodayBio();
+  renderTodayKoyomi();
   renderCalendar();
   renderSchedule();
   renderTodaySch();
