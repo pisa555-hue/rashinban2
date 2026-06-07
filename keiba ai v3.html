@@ -674,38 +674,39 @@ async function handleResultPhotoChange(logId, input) {
 
   if (!result) return;
 
-  // Update log
-  const logs = JSON.parse(localStorage.getItem('keiba_logs') || '[]');
-  const idx = logs.findIndex(l => l.id === logId);
-  if (idx >= 0) {
-    logs[idx].hit = result.hit;
-    logs[idx].actual_return = result.total_return || 0;
-    localStorage.setItem('keiba_logs', JSON.stringify(logs));
-  }
-
-  // Show result
+  // ログを自動更新せず、確認画面を表示するだけ
   resultBox.style.display = 'block';
+  const retAmt = result.total_return || 0;
   resultBox.innerHTML = `
-    <div style="font-size:.72rem;color:var(--text-dim);margin-bottom:4px">読み取り結果</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <span style="font-size:1.4rem">${result.hit ? '✅' : '❌'}</span>
-      <div>
-        <div style="font-weight:700;color:${result.hit?'#4cde7c':'var(--red)'}">
-          ${result.hit ? '的中！' : '不的中'}
-        </div>
-        <div style="font-size:.8rem;color:var(--gold-light);font-weight:700">
-          回収額: ¥${(result.total_return||0).toLocaleString()}
-        </div>
+    <div style="font-size:.75rem;color:var(--gold);font-weight:700;margin-bottom:8px">📷 読み取り結果（要確認）</div>
+    <div style="background:var(--panel);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:.8rem;margin-bottom:4px">
+        <span style="color:var(--text-dim)">払戻額: </span>
+        <strong style="color:${retAmt>0?'#4cde7c':'var(--red)'}">¥${retAmt.toLocaleString()}</strong>
       </div>
+      ${result.detail ? `<div style="font-size:.72rem;color:var(--text-dim)">${result.detail}</div>` : ''}
     </div>
-    ${result.detail ? `<div style="font-size:.72rem;color:var(--text-dim)">${result.detail}</div>` : ''}
-    <button class="btn btn-sm" style="margin-top:8px;width:100%" onclick="confirmPhotoResult(${logId}, ${result.hit}, ${result.total_return||0})">
-      ✅ この結果で確定する
-    </button>
+    <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:8px">⚠️ 実際の結果を選んで確定してください</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn" style="background:linear-gradient(135deg,#1a6b30,#0d3a18);font-size:.8rem;padding:10px"
+        onclick="confirmPhotoResult(${logId}, true, ${retAmt})">
+        ✅ 的中<br><small style="font-size:.7rem">¥${retAmt.toLocaleString()}</small>
+      </button>
+      <button class="btn btn-red" style="font-size:.8rem;padding:10px"
+        onclick="confirmPhotoResult(${logId}, false, 0)">
+        ❌ 外れ<br><small style="font-size:.7rem">¥0</small>
+      </button>
+    </div>
+    <div style="margin-top:8px">
+      <input type="number" id="manual-ret-${logId}" placeholder="回収額を手修正する場合はここに入力"
+        style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;border-radius:6px;padding:8px;color:var(--text);font-size:.78rem">
+      <button class="btn btn-sm" style="width:100%;margin-top:6px"
+        onclick="confirmPhotoResult(${logId}, true, parseInt(document.getElementById('manual-ret-${logId}').value)||${retAmt})">
+        ✏️ 修正値で的中確定
+      </button>
+    </div>
   `;
-
-  showToast(result.hit ? `✅ 的中！¥${(result.total_return||0).toLocaleString()}` : '❌ 不的中を記録');
-  renderLog();
+  showToast('📷 読み取り完了 - 結果を確認してください');
 }
 
 function confirmPhotoResult(logId, hit, amount) {
@@ -763,14 +764,15 @@ function renderLog() {
         ${l.actual_return ? `<span>回収: <strong style="color:#4cde7c">¥${l.actual_return.toLocaleString()}</strong></span>` : ''}
       </div>
 
+      <!-- 結果入力エリア（未入力 or 修正モード） -->
+      <div id="result-area-${l.id}">
       ${l.hit === null ? `
-        <!-- 📷 払戻金写真読み取り -->
         <button class="photo-read-btn" onclick="togglePhotoSection(${l.id})">
           📷 払戻金写真を読み取る（JRA自動入力）
         </button>
         <div class="inline-photo-section" id="ips-${l.id}">
           <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:8px">
-            JRAアプリの払戻金・レース結果画面を撮影してアップしてください
+            JRAアプリの払戻金・レース結果画面を撮影してください
           </div>
           <label style="display:block;background:rgba(201,168,76,.1);border:1px dashed var(--gold);
             border-radius:8px;padding:14px;text-align:center;cursor:pointer;font-size:.8rem;color:var(--gold-light)">
@@ -785,14 +787,30 @@ function renderLog() {
           </div>
           <div id="ipr-${l.id}" class="read-result-box"></div>
         </div>
-
-        <!-- 手入力フォールバック -->
         <div class="result-input-row">
-          <input type="number" id="ret-${l.id}" placeholder="手入力: 回収額（例: 15000）" min="0">
+          <input type="number" id="ret-${l.id}" placeholder="手入力: 回収額" min="0">
           <button class="btn btn-sm" onclick="updateResult(${l.id}, true)">的中</button>
           <button class="btn btn-sm btn-red" onclick="updateResult(${l.id}, false)">外れ</button>
         </div>
-      ` : ''}
+      ` : `
+        <button class="photo-read-btn" style="border-color:var(--text-dim);color:var(--text-dim);margin-top:6px"
+          onclick="resetResult(${l.id})">
+          ✏️ 結果を修正する
+        </button>
+      `}
+      </div>
+      <!-- 買い目詳細（折りたたみ） -->
+      ${l.bets && l.bets.length ? `
+      <button class="photo-read-btn" style="border-color:var(--text-dim);color:var(--text-dim);font-size:.72rem;margin-top:6px"
+        onclick="toggleBets(${l.id})">
+        📋 買い目を見る（${l.bets.length}点）
+      </button>
+      <div id="bets-${l.id}" style="display:none;margin-top:6px">
+        ${l.bets.map(b => `<div style="display:flex;justify-content:space-between;font-size:.75rem;padding:5px 8px;background:var(--panel2);border-radius:6px;margin-bottom:4px">
+          <span style="color:var(--gold-light)">${b.label}</span>
+          <span style="color:var(--blue)">${l.zone&&l.zone[0]==='C'?'×':'¥'}${b.amount.toLocaleString()}${l.zone&&l.zone[0]==='C'?'単位':''}</span>
+        </div>`).join('')}
+      </div>` : ''}
     </div>
   `).join('');
 }
@@ -800,6 +818,24 @@ function renderLog() {
 function togglePhotoSection(id) {
   const sec = document.getElementById('ips-'+id);
   sec.classList.toggle('show');
+}
+
+function toggleBets(id) {
+  const el = document.getElementById('bets-'+id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function resetResult(id) {
+  if (!confirm('結果をリセットして再入力しますか？')) return;
+  const logs = JSON.parse(localStorage.getItem('keiba_logs') || '[]');
+  const idx = logs.findIndex(l => l.id === id);
+  if (idx >= 0) {
+    logs[idx].hit = null;
+    logs[idx].actual_return = null;
+    localStorage.setItem('keiba_logs', JSON.stringify(logs));
+  }
+  renderLog();
+  showToast('🔄 結果をリセットしました');
 }
 
 function updateResult(id, hit) {
