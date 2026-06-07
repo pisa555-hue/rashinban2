@@ -1355,11 +1355,7 @@ function renderFortunePage() {
       summary: sh.day + '　' + sh.gogyo,
       comment: sh.message.slice(0,28) + '…'
     },
-    {
-      id:'seiza2', ico: signData ? signData.e : '⭐', name: (signData ? signData.n : '星座') + ' 詳細運勢',
-      summary: '恋愛：' + starsStr(sg.love) + '　仕事：' + starsStr(sg.work),
-      comment: '金運：' + starsStr(sg.money) + '　健康：' + starsStr(sg.health)
-    },
+
     {
       id:'suuhi', ico:'🔢', name:'数秘術',
       summary: '今日の数字：' + su,
@@ -1377,8 +1373,8 @@ function renderFortunePage() {
     },
     {
       id:'seiza', ico: signData ? signData.e : '⭐', name: (signData ? signData.n : '星座') + '（' + name + '）',
-      summary: '総合：' + starsStr(sg.total) + '　' + sg.message.slice(0,16) + '…',
-      comment: '恋愛' + starsStr(sg.love) + '　仕事' + starsStr(sg.work) + '　金' + starsStr(sg.money)
+      summary: '総合：' + starsStr(sg.total) + '　恋愛：' + starsStr(sg.love),
+      comment: '仕事：' + starsStr(sg.work) + '　金運：' + starsStr(sg.money) + '　' + sg.message.slice(0,18) + '…'
     }
   ];
 
@@ -1456,19 +1452,6 @@ function showFortuneDetail(id) {
     title='🌿 十二直';
     var j=calcJunichoku(today);
     html=makeDetailCard([{lbl:'今日の十二直',val:j.name},{lbl:'読み方',val:j.yomi},{lbl:'吉凶',val:j.kikkyo}],j.message);
-  } else if (id==='seiza2') {
-    title = '星座 詳細運勢';
-    var sg2 = calcSignFortune(sign, today);
-    var sd3 = null;
-    for(var i=0;i<SIGNS_DATA.length;i++){if(SIGNS_DATA[i].id===sign){sd3=SIGNS_DATA[i];break;}}
-    if(sd3) title = sd3.e + ' ' + sd3.n + '　詳細運勢';
-    html = makeDetailCard([
-      {lbl:'恋愛運', val:starsStr(sg2.love)},
-      {lbl:'仕事運', val:starsStr(sg2.work)},
-      {lbl:'金運',   val:starsStr(sg2.money)},
-      {lbl:'健康運', val:starsStr(sg2.health)},
-      {lbl:'総合運', val:starsStr(sg2.total)}
-    ], sg2.message);
   } else if (id==='seiza') {
     title='星座運勢';
     var sg=calcSignFortune(sign,today);
