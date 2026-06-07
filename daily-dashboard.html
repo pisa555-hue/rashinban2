@@ -1933,9 +1933,26 @@ function callApi(imageData, mediaType, promptText, onSuccess, onError) {
     }
     var jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('JSONが見つかりません');
-    // 数値フィールドから単位文字を除去
-    var jsonStr = jsonMatch[0].replace(/"(sales|rides|km|jitsu|kiro|score)"\s*:\s*"?([0-9.]+)[^,}\n]*"?/g, function(m,k,v){ return '"'+k+'":'+v; });
-    onSuccess(JSON.parse(jsonStr));
+    var jsonStr = jsonMatch[0];
+    // 数値フィールドから日本語・単位を全て除去
+    jsonStr = jsonStr.replace(/"(sales|rides|km|jitsu|kiro|score)"\s*:\s*"?([0-9.]+)[^,}\n"]*"?/g, function(m,k,v){ return '"'+k+'":'+parseFloat(v); });
+    // 文字列フィールドの値に日本語が入っていても問題ない（date/hours/start/end/grade/memo）
+    try {
+      onSuccess(JSON.parse(jsonStr));
+    } catch(pe) {
+      // パース失敗時は正規表現で個別抽出
+      var get = function(key) {
+        var m2 = jsonStr.match(new RegExp('"' + key + '"\\s*:\\s*"?([0-9A-Za-z.:\\-]+)"?'));
+        return m2 ? m2[1] : '';
+      };
+      onSuccess({
+        date:  get('date'),  sales: parseFloat(get('sales'))||0,
+        rides: parseInt(get('rides'))||0, km: parseFloat(get('km'))||0,
+        jitsu: parseFloat(get('jitsu'))||0, kiro: parseFloat(get('kiro'))||0,
+        hours: get('hours'), start: get('start'), end: get('end'),
+        score: parseInt(get('score'))||0, grade: get('grade'), memo: ''
+      });
+    }
   }).catch(function(err) {
     onError(err.message);
   });
@@ -1951,7 +1968,7 @@ function readNippoPhoto(input, isPage2) {
     el('nippoResult').classList.remove('show');
     var prompt = isPage2
       ? '大丸交通乗務員日報2ページ目から乗車履歴を読み取りJSONのみ返してください。{"rides_detail":[{"no":番号,"from":"乗車地","to":"降車地","km":数値,"fare":数値}]}'
-      : '大丸交通乗務員日報（1ページ目）から数値のみを読み取りJSONのみ返してください。注意：全ての値は純粋な数値のみ（単位・文字は含めない）。ridesは乗車回数（20〜50の整数）、kmは乗務走行距離（100〜300の小数可）、jitsuは実車率（小数点含むパーセント数値のみ）、salesは売上税込（5万〜10万程度の整数）。{"date":"YYYY-MM-DD","sales":数値のみ,"rides":数値のみ,"km":数値のみ,"jitsu":数値のみ,"kiro":数値のみ,"hours":"HH:MM","start":"HH:MM","end":"HH:MM","score":数値のみ,"grade":"A〜D","memo":""}';
+      : '大丸交通乗務員日報（1ページ目）の集計データから数値のみJSONで返してください。注意：乗車履歴の行（休・回・出・入などの行）は無視してください。{"date":"YYYY-MM-DD","sales":売上税込の整数,"rides":乗車回数の整数,"km":乗務走行距離の小数,"jitsu":実車率の小数,"kiro":キロ当り収入の小数,"hours":"HH:MM","start":"HH:MM","end":"HH:MM","score":評価点数の整数,"grade":"A〜D","memo":""}  全ての数値は純粋な数字のみ。単位・漢字・記号は含めない。';
     callApi(b64, file.type, prompt, function(parsed) {
       if (isPage2) {
         localStorage.setItem('nippoRides2', JSON.stringify(parsed.rides_detail || []));
