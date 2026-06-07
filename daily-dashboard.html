@@ -1671,6 +1671,7 @@ function toggleFamBioPage() {
   try {
     var body  = el('famBioPage');
     var arrow = el('famBioPageArrow');
+    if (!body) { alert('famBioPage要素が見つかりません'); return; }
     if (body.style.display === 'none') {
       body.style.display = 'block';
       arrow.textContent = '▼';
