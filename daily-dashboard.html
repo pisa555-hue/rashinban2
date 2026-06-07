@@ -1664,9 +1664,6 @@ function calcJunichoku(today) {
   return J[((diff%12)+12)%12];
 }
 
-function starsStr(score) {
-  var n=Math.round(score/20);if(n<1)n=1;if(n>5)n=5;
-  var s='';for(var i=0;i<n;i++)s+='★';for(var j=n;j<5;j++)s+='☆';return s;
 function toggleFamBioPage() {
   try {
     var body  = el('famBioPage');
@@ -1731,7 +1728,6 @@ function drawFamBioCharts() {
   }
 }
 
-}
 // チェックリスト
 // ============================================================
 function renderCheck() {
