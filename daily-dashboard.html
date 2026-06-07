@@ -183,7 +183,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
     </div>
     <div style="text-align:right">
-      <div class="score-num" id="scoreNum" style="font-size:20px;line-height:1.2;cursor:pointer;" onclick="toggleThemeLegend()">-</div>
+      <div class="score-num" id="scoreNum" style="font-size:34px;line-height:1;cursor:pointer;" onclick="toggleThemeLegend()">-</div>
       <div class="score-lbl" id="scoreLbl">TODAY</div>
     </div>
   </div>
@@ -874,8 +874,8 @@ function renderHeader() {
       theme = themes[i]; break;
     }
   }
-  el('scoreNum').textContent = theme.ico;
-  el('scoreLbl').textContent = theme.label;
+  el('scoreNum').textContent = String(h);
+  el('scoreLbl').textContent = theme.ico + ' ' + theme.label;
 }
 
 // ============================================================
@@ -1066,13 +1066,8 @@ function renderSchedule() {
   }
   var wd = ['日','月','火','水','木','金','土'];
   var sorted = events.slice().sort(function(a,b){ return (a.date+a.time) > (b.date+b.time) ? 1 : -1; });
-  // 家族カテゴリは除外（家族スケジュール欄に表示）
-  // ただし誕生日・記念日は自分のスケジュールにも表示
-  sorted = sorted.filter(function(e){
-    if (e.category !== 'family') return true;
-    // 誕生日・記念日は自分欄にも表示
-    return (e.title.indexOf('🎂') >= 0 || e.title.indexOf('💍') >= 0);
-  });
+  // 家族カテゴリは全て除外（家族スケジュール欄に表示）
+  sorted = sorted.filter(function(e){ return e.category !== 'family'; });
   var grouped = {};
   for (var i = 0; i < sorted.length; i++) {
     var ev = sorted[i];
@@ -1255,8 +1250,30 @@ function getFortuneName() {
 }
 function getFortuneSign() {
   var name = getFortuneName();
-  for (var i=0;i<PERSONS.length;i++) if(PERSONS[i].name===name) return PERSONS[i].sign;
-  return 'leo';
+  // 家族ボタンの場合はPERSONSのsignを使用
+  for (var i=0;i<PERSONS.length;i++) {
+    if(PERSONS[i].name===name) return PERSONS[i].sign;
+  }
+  // カスタム誕生日の場合は生年月日から星座を判定
+  var birth = getFortuneBirth();
+  return getBirthSign(birth);
+}
+
+function getBirthSign(birth) {
+  var m = birth.getMonth() + 1;
+  var d = birth.getDate();
+  if ((m===3&&d>=21)||(m===4&&d<=19)) return 'aries';
+  if ((m===4&&d>=20)||(m===5&&d<=20)) return 'taurus';
+  if ((m===5&&d>=21)||(m===6&&d<=21)) return 'gemini';
+  if ((m===6&&d>=22)||(m===7&&d<=22)) return 'cancer';
+  if ((m===7&&d>=23)||(m===8&&d<=22)) return 'leo';
+  if ((m===8&&d>=23)||(m===9&&d<=22)) return 'virgo';
+  if ((m===9&&d>=23)||(m===10&&d<=23)) return 'libra';
+  if ((m===10&&d>=24)||(m===11&&d<=22)) return 'scorpio';
+  if ((m===11&&d>=23)||(m===12&&d<=21)) return 'sagittarius';
+  if ((m===12&&d>=22)||(m===1&&d<=19)) return 'capricorn';
+  if ((m===1&&d>=20)||(m===2&&d<=18)) return 'aquarius';
+  return 'pisces';
 }
 
 function onBirthChange() {
@@ -1264,9 +1281,16 @@ function onBirthChange() {
   if (val) {
     localStorage.setItem(FORTUNE_BIRTH_KEY, val);
     localStorage.setItem(FORTUNE_NAME_KEY, 'カスタム');
-    el('birthName').textContent = 'カスタム';
+    // 星座を自動判定して表示
+    var birth = new Date(val + 'T00:00:00');
+    var sign = getBirthSign(birth);
+    var signName = '';
+    for (var i=0;i<SIGNS_DATA.length;i++) {
+      if (SIGNS_DATA[i].id === sign) { signName = SIGNS_DATA[i].e + SIGNS_DATA[i].n; break; }
+    }
+    el('birthName').textContent = signName || 'カスタム';
   }
-  renderFortunePage();
+  renderAstro();
 }
 
 function setPerson(idx) {
@@ -1332,14 +1356,9 @@ function renderFortunePage() {
       comment: sh.message.slice(0,28) + '…'
     },
     {
-      id:'bio', ico:'🌊', name:'バイオリズム',
-      summary: '',
-      bioRows: [
-        {lbl:'💪 身体',  val:ph,   color:'#e74c3c'},
-        {lbl:'💙 感情',  val:em,   color:'#3498db'},
-        {lbl:'🧠 知性',  val:intel, color:'#f39c12'},
-        {lbl:'✨ 直感',  val:intu,  color:'#9b59b6'}
-      ]
+      id:'seiza2', ico: signData ? signData.e : '⭐', name: (signData ? signData.n : '星座') + ' 詳細運勢',
+      summary: '恋愛：' + starsStr(sg.love) + '　仕事：' + starsStr(sg.work),
+      comment: '金運：' + starsStr(sg.money) + '　健康：' + starsStr(sg.health)
     },
     {
       id:'suuhi', ico:'🔢', name:'数秘術',
@@ -1358,8 +1377,8 @@ function renderFortunePage() {
     },
     {
       id:'seiza', ico: signData ? signData.e : '⭐', name: (signData ? signData.n : '星座') + '（' + name + '）',
-      summary: '今日の運勢：' + starsStr(sg.total),
-      comment: sg.message.slice(0,28) + '…'
+      summary: '総合：' + starsStr(sg.total) + '　' + sg.message.slice(0,16) + '…',
+      comment: '恋愛' + starsStr(sg.love) + '　仕事' + starsStr(sg.work) + '　金' + starsStr(sg.money)
     }
   ];
 
@@ -1437,6 +1456,19 @@ function showFortuneDetail(id) {
     title='🌿 十二直';
     var j=calcJunichoku(today);
     html=makeDetailCard([{lbl:'今日の十二直',val:j.name},{lbl:'読み方',val:j.yomi},{lbl:'吉凶',val:j.kikkyo}],j.message);
+  } else if (id==='seiza2') {
+    title = '星座 詳細運勢';
+    var sg2 = calcSignFortune(sign, today);
+    var sd3 = null;
+    for(var i=0;i<SIGNS_DATA.length;i++){if(SIGNS_DATA[i].id===sign){sd3=SIGNS_DATA[i];break;}}
+    if(sd3) title = sd3.e + ' ' + sd3.n + '　詳細運勢';
+    html = makeDetailCard([
+      {lbl:'恋愛運', val:starsStr(sg2.love)},
+      {lbl:'仕事運', val:starsStr(sg2.work)},
+      {lbl:'金運',   val:starsStr(sg2.money)},
+      {lbl:'健康運', val:starsStr(sg2.health)},
+      {lbl:'総合運', val:starsStr(sg2.total)}
+    ], sg2.message);
   } else if (id==='seiza') {
     title='星座運勢';
     var sg=calcSignFortune(sign,today);
