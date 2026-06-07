@@ -336,12 +336,14 @@ async function runAnalysis() {
 
 ## C区分の特別ロジック（最重要）
 C区分と判定した場合、以下を厳守してください：
-1. 穴軸馬（単勝10倍以上が理想）をAIが主体的に選定し axis_num に設定
+1. 穴軸馬（単勝10倍以上）をAIが主体的に選定し axis_num に設定
 2. 穴軸馬の「なぜ来るか」理由（hole_reason）を必ず2〜3文で記述（前走・コース適性・展開利・騎手など具体的に）
-3. 券種はAIが3連複/3連単/馬単から最適を選ぶ（ticket_typeに記載）
-4. base_unitで基本単位額を提示（例:2000円）。ユーザーが×0.1や×0.5で調整できる形にする
-5. betsのamountはbase_unitを1単位として組む
-6. rankingは穴馬を優先的に上位に配置し is_hole:true を付ける
+3. 相手馬は人気・穴問わずAIが自由に選ぶ。穴×人気×人気でも穴×穴×穴でも穴×人気×穴でも可
+4. 相手として選んだ馬の「選んだ理由」をpartner_reasonに1〜2文で記述
+5. 券種はAIが3連複/3連単/馬単から最適を選ぶ（ticket_typeに記載）
+6. base_unitで基本単位額を提示（例:2000円）。ユーザーが×0.1や×0.5で調整できる形にする
+7. betsのamountはbase_unitを1単位として組む
+8. rankingは穴軸馬を1位に、相手候補を上位に配置。穴馬にis_hole:true を付ける
 
 ## 出力JSON
 {
@@ -353,11 +355,13 @@ C区分と判定した場合、以下を厳守してください：
   "axis_num": 7,
   "axis_name": "穴軸馬名",
   "hole_reason": "この馬が来る理由2〜3文",
+  "partner_reason": "相手馬を選んだ理由1〜2文（人気馬も穴馬も理由があれば選ぶ）",
   "ticket_type": "3連複",
   "base_unit": 2000,
   "ranking": [
     {"rank":1,"num":7,"name":"穴馬名","odds":"25.0","ability":"A","condition":"S","course":"A","ground":"A","jockey":"A","training":"S","stable":"A","ev":"2.10","is_hole":true},
-    {"rank":2,"num":3,"name":"馬名","odds":"8.5","ability":"A","condition":"A","course":"S","ground":"A","jockey":"S","training":"A","stable":"A","ev":"1.45","is_hole":false}
+    {"rank":2,"num":3,"name":"馬名","odds":"8.5","ability":"A","condition":"A","course":"S","ground":"A","jockey":"S","training":"A","stable":"A","ev":"1.45","is_hole":false},
+    {"rank":3,"num":1,"name":"人気馬名","odds":"3.2","ability":"S","condition":"A","course":"A","ground":"A","jockey":"S","training":"A","stable":"S","ev":"1.05","is_hole":false}
   ],
   "bets": [
     {"label":"3連複 7-3-11","amount":2000},
@@ -459,18 +463,24 @@ function renderResult(r) {
 
   const isC = z === 'C';
 
-  let tableRows = (r.ranking||[]).map((h,i) => `
+  let tableRows = (r.ranking||[]).map((h,i) => {
+    const hole = h.is_hole;
+    const numColor = hole ? '#ff9c40' : 'var(--gold-light)';
+    const nameColor = hole ? '#ff9c40' : 'var(--text)';
+    const evColor = parseFloat(h.ev)>=2.0?'#ff9c40':parseFloat(h.ev)>=1.2?'#4cde7c':parseFloat(h.ev)>=1.0?'var(--gold-light)':'var(--red)';
+    return `
     <tr class="${i===0?'rank-1':''}">
       <td>${h.rank}</td>
-      <td><strong style="color:${h.is_hole?'#ff9c40':'var(--gold-light)'}">${h.num}${h.is_hole?'🕳':''}}</strong></td>
-      <td style="text-align:left;font-size:.68rem;color:${h.is_hole?'#ff9c40':'var(--text)'}">${h.name}</td>
-      <td style="color:${h.is_hole?'#ff9c40':'var(--text)'}">${h.odds}</td>
+      <td><strong style="color:${numColor}">${h.num}${hole?'🕳':''}</strong></td>
+      <td style="text-align:left;font-size:.68rem;color:${nameColor}">${h.name}</td>
+      <td style="color:${nameColor}">${h.odds}</td>
       <td>${h.ability}</td>
       <td>${h.condition}</td>
       <td>${h.course}</td>
       <td>${h.jockey}</td>
-      <td style="color:${parseFloat(h.ev)>=2.0?'#ff9c40':parseFloat(h.ev)>=1.2?'#4cde7c':parseFloat(h.ev)>=1.0?'var(--gold-light)':'var(--red)'}">${h.ev}</td>
-    </tr>`).join('');
+      <td style="color:${evColor}">${h.ev}</td>
+    </tr>`;
+  }).join('');
 
   let betItems = (r.bets||[]).map(b => `
     <li><span class="bet">${b.label}</span><span class="amt">${isC ? '×' : '¥'}${b.amount.toLocaleString()}${isC ? '単位' : ''}</span></li>`).join('');
@@ -495,6 +505,11 @@ function renderResult(r) {
         </div>
       </div>
       <div style="font-size:.8rem;line-height:1.7;color:var(--text)">${r.hole_reason||''}</div>
+      ${r.partner_reason ? `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,156,64,.3)">
+        <div style="font-size:.68rem;color:#ff9c40;font-weight:700;margin-bottom:3px">🤝 相手選択の理由</div>
+        <div style="font-size:.78rem;color:var(--text-dim)">${r.partner_reason}</div>
+      </div>` : ''}
     </div>` : '';
 
   // C区分専用：資金調整ガイド
