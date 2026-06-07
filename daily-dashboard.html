@@ -1668,16 +1668,23 @@ function starsStr(score) {
   var n=Math.round(score/20);if(n<1)n=1;if(n>5)n=5;
   var s='';for(var i=0;i<n;i++)s+='★';for(var j=n;j<5;j++)s+='☆';return s;
 function toggleFamBioPage() {
-  var body  = el('famBioPage');
-  var arrow = el('famBioPageArrow');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    arrow.textContent = '▼';
-    renderFamBioPage();
-    setTimeout(function() { drawFamBioCharts(); }, 80);
-  } else {
-    body.style.display = 'none';
-    arrow.textContent = '▶';
+  try {
+    var body  = el('famBioPage');
+    var arrow = el('famBioPageArrow');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      arrow.textContent = '▼';
+      renderFamBioPage();
+      setTimeout(function() { drawFamBioCharts(); }, 80);
+    } else {
+      body.style.display = 'none';
+      arrow.textContent = '▶';
+    }
+  } catch(e) {
+    var dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;font-size:11px;padding:8px 12px;z-index:9999;word-break:break-all;';
+    dbg.textContent = '家族バイオエラー: ' + e.message;
+    document.body.appendChild(dbg);
   }
 }
 
