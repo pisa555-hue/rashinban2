@@ -372,7 +372,7 @@ C区分と判定した場合、以下を厳守してください：
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 2000,
         messages: [{ role: 'user', content: [...imgContents, { type: 'text', text: prompt }] }]
       })
@@ -590,7 +590,7 @@ raceはレース名（読み取れなければ空文字）。`;
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 500,
         messages: [{
           role: 'user',
