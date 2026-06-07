@@ -1667,6 +1667,62 @@ function calcJunichoku(today) {
 function starsStr(score) {
   var n=Math.round(score/20);if(n<1)n=1;if(n>5)n=5;
   var s='';for(var i=0;i<n;i++)s+='★';for(var j=n;j<5;j++)s+='☆';return s;
+function toggleFamBioPage() {
+  var body  = el('famBioPage');
+  var arrow = el('famBioPageArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+    renderFamBioPage();
+    setTimeout(function() { drawFamBioCharts(); }, 80);
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
+  }
+}
+
+function renderFamBioPage() {
+  var h = '';
+  for (var i = 0; i < PERSONS.length; i++) {
+    var p = PERSONS[i];
+    var birth = new Date(p.birth + 'T00:00:00');
+    var ph = bioVal(birth,TODAY,23), em = bioVal(birth,TODAY,28);
+    var intel = bioVal(birth,TODAY,33), intu = bioVal(birth,TODAY,38);
+    h += '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">';
+    h += '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;color:var(--gold);margin-bottom:8px;">' + p.name + '</div>';
+    h += '<canvas id="famBioCv' + i + '" style="width:100%;height:100px;margin-bottom:8px;"></canvas>';
+    var bRows = [
+      {lbl:'\ud83d\udcaa \u8eab\u4f53', val:ph,    color:'#e74c3c'},
+      {lbl:'\ud83d\udc99 \u611f\u60c5', val:em,    color:'#3498db'},
+      {lbl:'\ud83e\udde0 \u77e5\u6027', val:intel, color:'#f39c12'},
+      {lbl:'\u2728 \u76f4\u611f',         val:intu,  color:'#9b59b6'}
+    ];
+    for (var bi = 0; bi < bRows.length; bi++) {
+      var br = bRows[bi];
+      var pct = Math.round(br.val*100), bw = Math.round((br.val+1)/2*100);
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">';
+      h += '<span style="font-size:10px;width:48px;flex:none;color:var(--muted)">' + br.lbl + '</span>';
+      h += '<div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden">';
+      h += '<div style="height:100%;width:' + bw + '%;background:' + br.color + ';border-radius:2px;"></div></div>';
+      h += '<span style="font-size:10px;color:' + br.color + ';flex:none;width:36px;text-align:right">' + (pct>=0?'+':'') + pct + '%</span>';
+      h += '</div>';
+    }
+    var adv = getBioAdviceDetail(ph, em, intel);
+    h += '<div style="margin-top:8px;padding:8px 10px;background:rgba(201,168,76,0.05);border-radius:2px;font-size:11px;color:var(--muted);line-height:1.8;">' + adv + '</div>';
+    h += '</div>';
+  }
+  el('famBioPageBody').innerHTML = h;
+}
+
+function drawFamBioCharts() {
+  for (var i = 0; i < PERSONS.length; i++) {
+    var cv = el('famBioCv' + i);
+    if (!cv) continue;
+    var birth = new Date(PERSONS[i].birth + 'T00:00:00');
+    drawBioChartOn(cv, birth);
+  }
+}
+
 }
 // チェックリスト
 // ============================================================
