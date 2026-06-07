@@ -180,8 +180,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="hdr-sub" id="hdrSub">大丸交通 葛飾510あ1508</div>
     </div>
     <div style="text-align:right">
-      <div class="score-num" id="scoreNum">-</div>
-      <div class="score-lbl">TODAY</div>
+      <div class="score-num" id="scoreNum" style="font-size:20px;line-height:1.2;cursor:pointer;" onclick="toggleThemeLegend()">-</div>
+      <div class="score-lbl" id="scoreLbl">TODAY</div>
     </div>
   </div>
   <nav class="tabs">
@@ -194,6 +194,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <button class="tab" data-sec="monthly">月集計</button>
   </nav>
 </header>
+
+<!-- 今日のテーマ凡例（折りたたみ） -->
+<div id="themeLegend" style="display:none;background:rgba(245,240,232,0.98);border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:88px;z-index:99;">
+  <div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">TODAY テーマ 凡例</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+    <div>💰 0-14：金運・節約を意識</div>
+    <div>💪 15-29：体を動かす日</div>
+    <div>🧠 30-44：学習・情報収集</div>
+    <div>👥 45-59：人間関係・交流</div>
+    <div>🎯 60-74：目標・計画見直し</div>
+    <div>🌱 75-89：新しいことを始める</div>
+    <div style="grid-column:1/-1;">🔮 90-99：直感に従う日</div>
+  </div>
+</div>
 
 <main class="main">
 
@@ -294,7 +308,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </section>
 
 <section class="sec" id="sec-bio">
-  <div class="notice">生年月日：1961年7月27日（吉久昌志）で計算済みです。</div>
+  <div class="card">
+    <div class="card-ttl">誕生日設定</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="date" class="form-inp" id="bioBirthInput" style="flex:1;" onchange="updateBioBirth()">
+      <button onclick="resetBioBirth()" style="padding:10px 14px;background:none;border:1px solid var(--border);border-radius:2px;font-size:11px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;color:var(--muted);white-space:nowrap;">リセット</button>
+    </div>
+  </div>
   <div class="card">
     <div class="card-ttl">バイオリズム波形 — 28日間</div>
     <canvas class="bio-canvas" id="bioCv"></canvas>
@@ -348,15 +368,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div id="fortuneMain">
     <!-- 7種の占いカード -->
     <div id="fortuneCards"></div>
-
-    <!-- 家族バイオリズム（折りたたみ） -->
-    <div class="card" style="margin-top:4px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleFamBio()">
-        <div class="card-ttl" style="margin:0;">家族のバイオリズム</div>
-        <div id="famBioArrow" style="font-size:18px;color:var(--muted);">▶</div>
-      </div>
-      <div id="famBioBody" style="display:none;margin-top:12px;"></div>
-    </div>
   </div>
 
 </section>
@@ -830,6 +841,11 @@ function renderFamSchedule() {
 }
 
 
+function toggleThemeLegend() {
+  var leg = el('themeLegend');
+  leg.style.display = leg.style.display === 'none' ? 'block' : 'none';
+}
+
 function renderHeader() {
   var wd = ['日','月','火','水','木','金','土'];
   var ry = ['大安','赤口','先勝','友引','先負','仏滅'];
@@ -837,7 +853,26 @@ function renderHeader() {
   var idx = doy % 6;
   el('hdrDate').textContent = TODAY.getFullYear() + '年' + (TODAY.getMonth()+1) + '月' + TODAY.getDate() + '日（' + wd[TODAY.getDay()] + '）';
   el('hdrSub').textContent = ry[idx] + '　大丸交通 葛飾510あ1508';
-  el('scoreNum').textContent = Math.floor(40 + hashDay(TODAY) * 0.6);
+
+  // 今日のテーマ
+  var h = hashDay(TODAY);
+  var themes = [
+    { range:[0,14],   ico:'💰', label:'金運・節約' },
+    { range:[15,29],  ico:'💪', label:'運動の日' },
+    { range:[30,44],  ico:'🧠', label:'学習・情報' },
+    { range:[45,59],  ico:'👥', label:'人間関係' },
+    { range:[60,74],  ico:'🎯', label:'目標見直し' },
+    { range:[75,89],  ico:'🌱', label:'新しい挑戦' },
+    { range:[90,99],  ico:'🔮', label:'直感の日' }
+  ];
+  var theme = themes[themes.length-1];
+  for (var i=0; i<themes.length; i++) {
+    if (h >= themes[i].range[0] && h <= themes[i].range[1]) {
+      theme = themes[i]; break;
+    }
+  }
+  el('scoreNum').textContent = theme.ico;
+  el('scoreLbl').textContent = theme.label;
 }
 
 // ============================================================
@@ -1028,6 +1063,13 @@ function renderSchedule() {
   }
   var wd = ['日','月','火','水','木','金','土'];
   var sorted = events.slice().sort(function(a,b){ return (a.date+a.time) > (b.date+b.time) ? 1 : -1; });
+  // 家族カテゴリは除外（家族スケジュール欄に表示）
+  // ただし誕生日・記念日は自分のスケジュールにも表示
+  sorted = sorted.filter(function(e){
+    if (e.category !== 'family') return true;
+    // 誕生日・記念日は自分欄にも表示
+    return (e.title.indexOf('🎂') >= 0 || e.title.indexOf('💍') >= 0);
+  });
   var grouped = {};
   for (var i = 0; i < sorted.length; i++) {
     var ev = sorted[i];
@@ -1099,75 +1141,40 @@ function addEvent() {
 // ============================================================
 // バイオリズム
 // ============================================================
+var BIO_BIRTH_KEY = 'bioBirthDate';
+function getBioBirth() {
+  var stored = localStorage.getItem(BIO_BIRTH_KEY);
+  if (stored) return new Date(stored + 'T00:00:00');
+  return PROFILE_BIRTH;
+}
+function updateBioBirth() {
+  var val = el('bioBirthInput').value;
+  if (val) { localStorage.setItem(BIO_BIRTH_KEY, val); renderBio(); setTimeout(drawBioChart, 60); }
+}
+function resetBioBirth() {
+  localStorage.removeItem(BIO_BIRTH_KEY);
+  el('bioBirthInput').value = '1961-07-27';
+  renderBio(); setTimeout(drawBioChart, 60);
+}
 function renderBio() {
-  drawBioChart();
-  var ph    = bioVal(PROFILE_BIRTH, TODAY, 23);
-  var em    = bioVal(PROFILE_BIRTH, TODAY, 28);
-  var intel = bioVal(PROFILE_BIRTH, TODAY, 33);
-  var intu  = bioVal(PROFILE_BIRTH, TODAY, 38);
-  el('bPh').textContent  = bioFmt(ph);    el('bPhS').textContent = bioSt(ph);
-  el('bEm').textContent  = bioFmt(em);    el('bEmS').textContent = bioSt(em);
-  el('bIn').textContent  = bioFmt(intel); el('bInS').textContent = bioSt(intel);
-  el('bIt').textContent  = bioFmt(intu);  el('bItS').textContent = bioSt(intu);
-  el('bioQ').textContent = Math.round(ph*100) + '/' + Math.round(em*100) + '/' + Math.round(intel*100) + '/' + Math.round(intu*100);
+  var birth = getBioBirth();
+  var bInput = el('bioBirthInput');
+  if (bInput) bInput.value = birth.getFullYear() + '-' + String(birth.getMonth()+1).padStart(2,'0') + '-' + String(birth.getDate()).padStart(2,'0');
+  var ph = bioVal(birth,TODAY,23), em = bioVal(birth,TODAY,28), intel = bioVal(birth,TODAY,33), intu = bioVal(birth,TODAY,38);
+  el('bPh').textContent = bioFmt(ph);   el('bPhS').textContent = bioSt(ph);
+  el('bEm').textContent = bioFmt(em);   el('bEmS').textContent = bioSt(em);
+  el('bIn').textContent = bioFmt(intel);el('bInS').textContent = bioSt(intel);
+  el('bIt').textContent = bioFmt(intu); el('bItS').textContent = bioSt(intu);
+  el('bioQ').textContent = Math.round(ph*100)+'/'+Math.round(em*100)+'/'+Math.round(intel*100)+'/'+Math.round(intu*100);
   var adv = [];
-  if (ph < -0.3)      adv.push('身体は低調期。無理な運動は避け十分な休息を。');
-  else if (ph > 0.5)  adv.push('身体絶好調！運動や体力仕事に最適な日。');
-  if (em < -0.3)      adv.push('感情が揺れやすい時期。重要な決断は後日に。');
-  else if (em > 0.5)  adv.push('感情リズム高め。コミュニケーションに積極的に。');
-  if (intel < -0.3)   adv.push('知的活動は低調。大局的な思考を優先して。');
-  else if (intel > 0.5) adv.push('知性リズム高峰！企画・学習に絶好のタイミング。');
-  if (intu < -0.3)    adv.push('直感が揺らぎやすい。慎重な判断を心がけて。');
-  else if (intu > 0.5) adv.push('直感が冴えています！インスピレーションを大切に。');
+  if (ph<-0.3)adv.push('身体は低調期。無理な運動は避け十分な休息を。');else if(ph>0.5)adv.push('身体絶好調！運動や体力仕事に最適な日。');
+  if (em<-0.3)adv.push('感情が揺れやすい時期。重要な決断は後日に。');else if(em>0.5)adv.push('感情リズム高め。コミュニケーションに積極的に。');
+  if (intel<-0.3)adv.push('知的活動は低調。大局的な思考を優先して。');else if(intel>0.5)adv.push('知性リズム高峰！企画・学習に絶好のタイミング。');
+  if (intu<-0.3)adv.push('直感が揺らぎやすい。慎重な判断を心がけて。');else if(intu>0.5)adv.push('直感が冴えています！インスピレーションを大切に。');
   el('bioAdv').textContent = adv.length ? adv.join('　') : 'バランスのとれた良い状態です。積極的に動きましょう。';
 }
-
-function toggleFamBioPage() {
-  var body  = el('famBioPage');
-  var arrow = el('famBioPageArrow');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    arrow.textContent = '▼';
-    renderFamBioPage();
-    setTimeout(function() { drawFamBioCharts(); }, 60);
-  } else {
-    body.style.display = 'none';
-    arrow.textContent = '▶';
-  }
-}
-
-function renderFamBioPage() {
-  var h = '';
-  for (var i = 0; i < PERSONS.length; i++) {
-    var p = PERSONS[i];
-    var birth = new Date(p.birth + 'T00:00:00');
-    var ph = bioVal(birth,TODAY,23), em = bioVal(birth,TODAY,28);
-    var intel = bioVal(birth,TODAY,33), intu = bioVal(birth,TODAY,38);
-    h += '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">';
-    h += '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;color:var(--gold);margin-bottom:8px;">' + p.name + '</div>';
-    h += '<canvas id="famBioCv' + i + '" style="width:100%;height:100px;"></canvas>';
-    h += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:10px;">';
-    h += '<span style="color:#e74c3c">💪 ' + bioFmt(ph) + ' ' + bioSt(ph) + '</span>';
-    h += '<span style="color:#3498db">💙 ' + bioFmt(em) + ' ' + bioSt(em) + '</span>';
-    h += '<span style="color:#f39c12">🧠 ' + bioFmt(intel) + ' ' + bioSt(intel) + '</span>';
-    h += '<span style="color:#9b59b6">✨ ' + bioFmt(intu) + ' ' + bioSt(intu) + '</span>';
-    h += '</div></div>';
-  }
-  el('famBioPageBody').innerHTML = h;
-}
-
-function drawFamBioCharts() {
-  for (var i = 0; i < PERSONS.length; i++) {
-    var cv = el('famBioCv' + i);
-    if (!cv) continue;
-    var p = PERSONS[i];
-    var birth = new Date(p.birth + 'T00:00:00');
-    drawBioChartOn(cv, birth);
-  }
-}
-
 function drawBioChart() {
-  drawBioChartOn(el('bioCv'), PROFILE_BIRTH);
+  drawBioChartOn(el('bioCv'), getBioBirth());
 }
 
 function drawBioChartOn(cv, birth) {
@@ -1450,36 +1457,7 @@ function closeFortuneDetail() {
   el('fortuneMain').style.display = 'block';
 }
 
-function toggleFamBio() {
-  var body = el('famBioBody');
-  var arrow = el('famBioArrow');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    arrow.textContent = '▼';
-    renderFamBioSection();
-  } else {
-    body.style.display = 'none';
-    arrow.textContent = '▶';
-  }
-}
 
-function renderFamBioSection() {
-  var el2 = el('famBioBody');
-  if (!el2 || el2.style.display === 'none') return;
-  var h = '';
-  for (var i=0;i<PERSONS.length;i++) {
-    var p = PERSONS[i];
-    var birth = new Date(p.birth + 'T00:00:00');
-    var ph=bioVal(birth,TODAY,23),em=bioVal(birth,TODAY,28),intel=bioVal(birth,TODAY,33),intu=bioVal(birth,TODAY,38);
-    h += '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">';
-    h += '<div style="font-family:\'Shippori Mincho\',serif;font-size:14px;margin-bottom:8px;color:var(--gold)">'+p.name+'</div>';
-    h += makeBioBar('💪 身体',ph,'#e74c3c')+makeBioBar('💙 感情',em,'#3498db')+
-         makeBioBar('🧠 知性',intel,'#f39c12')+makeBioBar('✨ 直感',intu,'#9b59b6');
-    h += '<button onclick="showFamBioDetail('+i+')" style="margin-top:6px;padding:6px 14px;font-size:11px;background:none;border:1px solid var(--border);border-radius:2px;cursor:pointer;font-family:\'Zen Kaku Gothic New\',sans-serif;color:var(--muted);">詳細アドバイス</button>';
-    h += '</div>';
-  }
-  el2.innerHTML = h;
-}
 
 function showFamBioDetail(idx) {
   var p = PERSONS[idx];
