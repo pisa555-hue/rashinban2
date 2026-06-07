@@ -379,7 +379,15 @@ C区分と判定した場合、以下を厳守してください：
     });
 
     const data = await response.json();
-    const raw = data.content?.map(c => c.text || '').join('');
+
+    // APIエラーチェック
+    if (data.error) throw new Error(data.error.message || 'APIエラー');
+    if (!data.content || !Array.isArray(data.content)) {
+      throw new Error('APIレスポンス異常: ' + JSON.stringify(data).substring(0,100));
+    }
+
+    const raw = data.content.map(c => c.text || '').join('');
+    if (!raw) throw new Error('AIからの応答が空です');
     const clean = raw.replace(/```json|```/g, '').trim();
 
     let result;
@@ -387,7 +395,7 @@ C区分と判定した場合、以下を厳守してください：
     catch(e) {
       const match = clean.match(/\{[\s\S]*\}/);
       if (match) result = JSON.parse(match[0]);
-      else throw new Error('JSON解析失敗');
+      else throw new Error('JSON解析失敗: ' + clean.substring(0,100));
     }
 
     currentResult = result;
