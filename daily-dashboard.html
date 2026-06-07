@@ -2068,22 +2068,33 @@ function goSec(id) {
 // 起動
 // ============================================================
 window.onload = function() {
-  loadState();
-  ensureFamilyEvents();
-  renderHeader();
-  renderFortune();
-  renderLucky();
-  renderFamilyToday();
-  renderTodayBio();
-  renderTodayKoyomi();
-  renderCalendar();
-  renderSchedule();
-  renderTodaySch();
-  renderBio();
-  renderAstro();
-  syncSign();
-  renderCheck();
-  renderNippoQuick();
+  var step = '';
+  try {
+    step='loadState'; loadState();
+    step='ensureFamilyEvents'; ensureFamilyEvents();
+    step='renderHeader'; renderHeader();
+    step='renderFortune'; renderFortune();
+    step='renderLucky'; renderLucky();
+    step='renderFamilyToday'; renderFamilyToday();
+    step='renderTodayBio'; renderTodayBio();
+    step='renderTodayKoyomi'; renderTodayKoyomi();
+    step='renderCalendar'; renderCalendar();
+    step='renderSchedule'; renderSchedule();
+    step='renderTodaySch'; renderTodaySch();
+    step='renderBio'; renderBio();
+    step='renderAstro'; renderAstro();
+    step='syncSign'; syncSign();
+    step='renderCheck'; renderCheck();
+    step='renderNippoQuick'; renderNippoQuick();
+    step='checkApiKey'; checkApiKey();
+  } catch(e) {
+    // エラーを画面に表示
+    var dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;font-size:11px;padding:6px 10px;z-index:9999;word-break:break-all;';
+    dbg.textContent = '⚠ エラー at ' + step + ': ' + e.message;
+    document.body.appendChild(dbg);
+    console.error('Error at ' + step + ':', e);
+  }
 
   checkApiKey();
   // タブ
