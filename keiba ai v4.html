@@ -129,13 +129,13 @@
   .stat-card{background:var(--panel);border:1px solid var(--green-light);border-radius:10px;padding:14px;text-align:center}
   .stat-card .val{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold-light);line-height:1}
   .stat-card .lbl{font-size:.65rem;color:var(--text-dim);margin-top:4px}
-  .log-entry{background:var(--panel);border:1px solid #2a3d2c;border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
+  .log-entry{background:var(--panel);border:1px solid #2a3d2c;border-radius:10px;padding:12px;margin-bottom:10px;position:relative;overflow:hidden;word-break:break-all}
   .log-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-  .log-race{font-weight:700;color:var(--gold-light);font-size:.85rem}
+  .log-race{font-weight:700;color:var(--gold-light);font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100vw - 120px)}
   .log-date{font-size:.7rem;color:var(--text-dim)}
   .log-zone{font-size:.7rem;padding:2px 8px;border-radius:10px;background:var(--green);color:var(--gold-light);font-weight:700}
-  .log-result{display:flex;gap:8px;font-size:.78rem;flex-wrap:wrap}
-  .log-result span{background:var(--panel2);padding:4px 8px;border-radius:6px}
+  .log-result{display:flex;gap:6px;font-size:.72rem;flex-wrap:wrap;overflow:hidden}
+  .log-result span{background:var(--panel2);padding:3px 7px;border-radius:6px;white-space:nowrap}
   .log-result .hit{color:#4cde7c;font-weight:700}
   .log-result .miss{color:var(--red);font-weight:700}
   .log-result .pending{color:var(--text-dim)}
@@ -854,10 +854,10 @@ function renderLog() {
           <div style="font-weight:900;color:var(--gold-light);font-size:.95rem">📅 ${date}</div>
           <div style="font-size:.7rem;color:var(--text-dim)">${items.length}R / 的中${dHits}</div>
         </div>
-        <div style="display:flex;gap:10px;font-size:.72rem;flex-wrap:wrap">
-          <span style="color:var(--text-dim)">投資 <strong style="color:var(--gold-light)">¥${dInvest.toLocaleString()}</strong></span>
-          <span style="color:var(--text-dim)">回収 <strong style="color:#4cde7c">¥${dReturn.toLocaleString()}</strong></span>
-          <span style="color:var(--text-dim)">収支 <strong style="color:${balanceColor}">${dBalance>=0?'+':''}¥${dBalance.toLocaleString()}</strong></span>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:.7rem">
+          <span style="color:var(--text-dim)">投資<br><strong style="color:var(--gold-light)">¥${dInvest.toLocaleString()}</strong></span>
+          <span style="color:var(--text-dim)">回収<br><strong style="color:#4cde7c">¥${dReturn.toLocaleString()}</strong></span>
+          <span style="color:var(--text-dim)">収支<br><strong style="color:${balanceColor}">${dBalance>=0?'+':''}¥${dBalance.toLocaleString()}</strong></span>
         </div>
       </div>`;
 
@@ -874,9 +874,9 @@ function renderLog() {
           <div class="log-zone">${l.zone}</div>
         </div>
         ${l.axis ? `
-        <div style="background:rgba(255,156,64,.1);border:1px solid #ff9c40;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:.76rem">
-          <span style="color:#ff9c40;font-weight:700">🎯 軸: ${l.axis}</span>
-          ${l.zone_label?`<div style="color:var(--text-dim);font-size:.68rem;margin-top:2px">${l.zone_label}</div>`:''}
+        <div style="background:rgba(255,156,64,.1);border:1px solid #ff9c40;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:.74rem;overflow:hidden">
+          <div style="color:#ff9c40;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🎯 軸: ${l.axis}</div>
+          ${l.zone_label?`<div style="color:var(--text-dim);font-size:.66rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.zone_label}</div>`:''}
         </div>` : ''}
         <div class="log-result">
           <span>投資: <strong style="color:var(--gold-light)">${l.invest_label||('¥'+(l.invest||0).toLocaleString())}</strong></span>
