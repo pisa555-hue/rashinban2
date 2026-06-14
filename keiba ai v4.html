@@ -888,31 +888,63 @@ function renderLog() {
         </div>
         <div id="result-area-${l.id}">
         ${l.hit === null ? `
+          <!-- 📷 払戻金写真読み取り -->
           <button class="photo-read-btn" onclick="togglePhotoSection(${l.id})">
-            📷 払戻金写真を読み取る（JRA自動入力）
+            📷 払戻金写真を読み取る（AI自動入力）
           </button>
           <div class="inline-photo-section" id="ips-${l.id}">
-            <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:8px">
-              JRAの払戻金・結果画面を撮影してください
-            </div>
             <label style="display:block;background:rgba(201,168,76,.1);border:1px dashed var(--gold);
-              border-radius:8px;padding:14px;text-align:center;cursor:pointer;font-size:.8rem;color:var(--gold-light)">
-              📸 写真を選択
+              border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:.8rem;color:var(--gold-light)">
+              📸 払戻金画面を撮影
               <input type="file" accept="image/*" class="inline-photo-input"
                 onchange="handleResultPhotoChange(${l.id}, this)">
             </label>
             <img id="ipp-${l.id}" class="inline-photo-preview">
-            <div id="ipl-${l.id}" style="display:none;text-align:center;padding:12px">
+            <div id="ipl-${l.id}" style="display:none;text-align:center;padding:10px">
               <div class="spinner" style="margin:0 auto 6px"></div>
-              <div style="font-size:.75rem;color:var(--text-dim)">読み取り中...</div>
+              <div style="font-size:.72rem;color:var(--text-dim)">読み取り中...</div>
             </div>
             <div id="ipr-${l.id}" class="read-result-box"></div>
           </div>
-          <div class="result-input-row">
-            <input type="number" id="ret-${l.id}" placeholder="手入力: 回収額" min="0">
-            <button class="btn btn-sm" onclick="updateResult(${l.id}, true)">的中</button>
-            <button class="btn btn-sm btn-red" onclick="updateResult(${l.id}, false)">外れ</button>
-          </div>
+
+          <!-- 💰 的中買い目選択＋自動計算 -->
+          ${l.bets && l.bets.length ? `
+          <div style="background:var(--panel2);border-radius:8px;padding:10px;margin-top:8px">
+            <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:8px">💰 的中買い目を選んで自動計算</div>
+            <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:6px">① 的中した買い目をタップ</div>
+            <div id="bet-selector-${l.id}">
+              ${l.bets.map((b,bi) => `
+              <div onclick="selectBet(${l.id},${bi})" id="bet-opt-${l.id}-${bi}"
+                style="display:flex;justify-content:space-between;align-items:center;
+                padding:7px 10px;margin-bottom:4px;background:var(--panel);border-radius:6px;
+                border:1px solid var(--green-light);cursor:pointer;transition:all .2s">
+                <span style="font-size:.74rem;color:var(--gold-light)">${b.label}</span>
+                <span style="font-size:.72rem;color:var(--blue)">¥${(b.amount||0).toLocaleString()}</span>
+              </div>`).join('')}
+            </div>
+            <div style="font-size:.7rem;color:var(--text-dim);margin:8px 0 4px">② 払戻金（100円あたり）を入力</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" id="haraimodoshi-${l.id}" placeholder="例: 1230"
+                style="flex:1;background:var(--panel);border:1px solid #2a4a2e;border-radius:6px;
+                padding:8px;color:var(--text);font-size:.8rem"
+                oninput="calcReturn(${l.id})">
+              <span style="font-size:.72rem;color:var(--text-dim);white-space:nowrap">円/100円</span>
+            </div>
+            <div id="calc-result-${l.id}" style="display:none;margin-top:8px;background:rgba(76,222,124,.1);
+              border:1px solid #4cde7c;border-radius:8px;padding:10px">
+              <div style="font-size:.7rem;color:var(--text-dim)">計算結果</div>
+              <div id="calc-detail-${l.id}" style="font-size:.8rem;color:var(--text);margin:4px 0"></div>
+              <div id="calc-return-${l.id}" style="font-size:1.2rem;font-weight:900;color:#4cde7c"></div>
+              <div id="calc-balance-${l.id}" style="font-size:.8rem;font-weight:700;margin-top:2px"></div>
+              <button class="btn btn-sm" style="width:100%;margin-top:8px"
+                onclick="confirmCalcResult(${l.id})">✅ この結果で確定</button>
+            </div>
+          </div>` : ''}
+
+          <!-- 外れボタン -->
+          <button class="btn btn-sm btn-red" style="width:100%;margin-top:8px"
+            onclick="updateResult(${l.id}, false)">❌ 外れ</button>
+
         ` : `
           <button class="photo-read-btn" style="border-color:var(--text-dim);color:var(--text-dim);margin-top:6px"
             onclick="resetResult(${l.id})">
@@ -936,6 +968,68 @@ function renderLog() {
 
     return dayHeader + raceCards;
   }).join('');
+}
+
+// 買い目選択
+var selectedBetIndex = {};
+function selectBet(logId, betIdx) {
+  selectedBetIndex[logId] = betIdx;
+  var logs = JSON.parse(localStorage.getItem('keiba_logs') || '[]');
+  var log = logs.find(function(l){ return l.id === logId; });
+  if (!log) return;
+  log.bets.forEach(function(b, i) {
+    var el = document.getElementById('bet-opt-'+logId+'-'+i);
+    if (!el) return;
+    el.style.background = i === betIdx ? 'rgba(255,156,64,.2)' : 'var(--panel)';
+    el.style.borderColor = i === betIdx ? '#ff9c40' : 'var(--green-light)';
+  });
+  calcReturn(logId);
+}
+
+// 払戻金自動計算
+function calcReturn(logId) {
+  var bidx = selectedBetIndex[logId];
+  var inp = document.getElementById('haraimodoshi-'+logId);
+  var haraimodoshi = inp ? parseInt(inp.value || '0') : 0;
+  if (bidx === undefined || !haraimodoshi) return;
+  var logs = JSON.parse(localStorage.getItem('keiba_logs') || '[]');
+  var log = logs.find(function(l){ return l.id === logId; });
+  if (!log || !log.bets[bidx]) return;
+  var bet = log.bets[bidx];
+  var amount = bet.amount || 0;
+  var returnAmt = Math.floor(haraimodoshi * amount / 100);
+  var balance = returnAmt - (log.invest || 0);
+  var balanceColor = balance >= 0 ? '#4cde7c' : '#e05050';
+  var resultEl = document.getElementById('calc-result-'+logId);
+  var detailEl = document.getElementById('calc-detail-'+logId);
+  var returnEl = document.getElementById('calc-return-'+logId);
+  var balanceEl = document.getElementById('calc-balance-'+logId);
+  if (resultEl) resultEl.style.display = 'block';
+  if (detailEl) detailEl.textContent = bet.label + ' ¥'+amount+' × ('+haraimodoshi+'円÷100)';
+  if (returnEl) returnEl.textContent = '回収額: ¥'+returnAmt.toLocaleString();
+  if (balanceEl) {
+    balanceEl.textContent = '収支: '+(balance>=0?'+':'')+'¥'+balance.toLocaleString();
+    balanceEl.style.color = balanceColor;
+  }
+}
+
+// 計算結果を確定
+function confirmCalcResult(logId) {
+  var bidx = selectedBetIndex[logId];
+  var inp = document.getElementById('haraimodoshi-'+logId);
+  var haraimodoshi = inp ? parseInt(inp.value || '0') : 0;
+  if (bidx === undefined || !haraimodoshi) { showToast('買い目と払戻金を入力してください'); return; }
+  var logs = JSON.parse(localStorage.getItem('keiba_logs') || '[]');
+  var idx = -1;
+  logs.forEach(function(l,i){ if(l.id===logId) idx=i; });
+  if (idx < 0) return;
+  var bet = logs[idx].bets[bidx];
+  var returnAmt = Math.floor(haraimodoshi * (bet.amount||0) / 100);
+  logs[idx].hit = true;
+  logs[idx].actual_return = returnAmt;
+  localStorage.setItem('keiba_logs', JSON.stringify(logs));
+  showToast('的中！¥'+returnAmt.toLocaleString()+'を記録しました');
+  renderLog();
 }
 
 function togglePhotoSection(id) {
