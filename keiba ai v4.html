@@ -206,6 +206,63 @@
 
   <div style="margin-top:10px;font-size:.75rem;color:var(--text-dim)">💡 詳細出馬表2〜3枚＋オッズ画面1枚が最適</div>
 
+  <!-- 馬場・天気・その他条件 -->
+  <div style="background:var(--panel);border:1px solid #2a3d2c;border-radius:10px;padding:12px;margin-top:12px">
+    <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:10px;letter-spacing:1px">🌤️ レース条件（デフォルト：良・晴）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px">芝の状態</div>
+        <select id="baba-select" style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;
+          border-radius:6px;padding:7px 8px;color:var(--text);font-size:.78rem;font-family:'Noto Sans JP',sans-serif">
+          <option value="良">良</option>
+          <option value="稍重">稍重</option>
+          <option value="重">重</option>
+          <option value="不良">不良</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px">天気</div>
+        <select id="tenki-select" style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;
+          border-radius:6px;padding:7px 8px;color:var(--text);font-size:.78rem;font-family:'Noto Sans JP',sans-serif">
+          <option value="晴">☀️ 晴</option>
+          <option value="曇">☁️ 曇</option>
+          <option value="小雨">🌦️ 小雨</option>
+          <option value="雨">🌧️ 雨</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px">ペース傾向</div>
+        <select id="pace-select" style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;
+          border-radius:6px;padding:7px 8px;color:var(--text);font-size:.78rem;font-family:'Noto Sans JP',sans-serif">
+          <option value="不明">不明</option>
+          <option value="ハイペース想定">ハイペース想定</option>
+          <option value="ミドルペース想定">ミドルペース想定</option>
+          <option value="スローペース想定">スローペース想定</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px">トラックバイアス</div>
+        <select id="bias-select" style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;
+          border-radius:6px;padding:7px 8px;color:var(--text);font-size:.78rem;font-family:'Noto Sans JP',sans-serif">
+          <option value="不明">不明</option>
+          <option value="内有利">内有利</option>
+          <option value="外有利">外有利</option>
+          <option value="先行有利">先行有利</option>
+          <option value="差し有利">差し有利</option>
+          <option value="フラット">フラット</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px">補足メモ（任意）</div>
+      <input type="text" id="memo-input" placeholder="例：前日雨で内が荒れている、逃げ馬不在など"
+        style="width:100%;background:var(--panel2);border:1px solid #2a4a2e;border-radius:6px;
+        padding:7px 8px;color:var(--text);font-size:.75rem;font-family:'Noto Sans JP',sans-serif">
+    </div>
+  </div>
+
   <button class="btn btn-full btn-gold" id="analyzeBtn" onclick="runAnalysis()" disabled>
     🤖 AI分析スタート
   </button>
@@ -334,7 +391,23 @@ async function runAnalysis() {
       source: { type: 'base64', media_type: f.type || 'image/jpeg', data: await fileToBase64(f) }
     })));
 
+    // レース条件を取得
+    const babaSel = document.getElementById('baba-select');
+    const tenkiSel = document.getElementById('tenki-select');
+    const paceSel = document.getElementById('pace-select');
+    const biasSel = document.getElementById('bias-select');
+    const memoInp = document.getElementById('memo-input');
+    const raceCondition = [
+      '馬場状態: ' + (babaSel ? babaSel.value : '良'),
+      '天気: ' + (tenkiSel ? tenkiSel.value : '晴'),
+      'ペース: ' + (paceSel ? paceSel.value : '不明'),
+      'トラックバイアス: ' + (biasSel ? biasSel.value : '不明'),
+      memoInp && memoInp.value ? '補足: ' + memoInp.value : ''
+    ].filter(Boolean).join(' / ');
+
     const prompt = `あなたはプロの競馬データサイエンティスト兼資産運用AIです。
+【本日のレース条件】${raceCondition}
+この条件を必ず分析に反映してください。馬場・天気・バイアスは軸選定と展開予測に直結します。
 画像（出馬表・オッズ）を解析し、下記JSON形式のみで返答。マークダウン・バッククォート禁止。
 
 ## STEP1 読み取り（最重要）
