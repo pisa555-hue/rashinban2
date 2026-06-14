@@ -20,6 +20,10 @@
     padding:16px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
   header h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:var(--gold-light);line-height:1}
   header .sub{font-size:.65rem;color:var(--text-dim);letter-spacing:1px}
+  .reload-btn{background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:8px;
+    padding:6px 12px;color:var(--gold-light);font-size:.7rem;cursor:pointer;
+    font-family:'Noto Sans JP',sans-serif;font-weight:700;white-space:nowrap}
+  .reload-btn:active{background:rgba(201,168,76,.3)}
   .tabs{display:flex;background:var(--panel);border-bottom:1px solid #2a3d2c}
   .tab{flex:1;padding:12px 6px;text-align:center;font-size:.75rem;font-weight:700;color:var(--text-dim);
     cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
@@ -174,10 +178,11 @@
 
 <header>
   <div style="font-size:1.8rem">🏇</div>
-  <div>
+  <div style="flex:1">
     <h1>KEIBA AI ANALYST</h1>
     <div class="sub">競馬AI投資アナリスト｜資産運用モード</div>
   </div>
+  <button class="reload-btn" onclick="location.reload(true)">🔄 更新</button>
 </header>
 
 <div class="tabs">
@@ -194,12 +199,12 @@
     <div class="upload-icon">📷</div>
     <div class="upload-text">
       <strong>出馬表・オッズ画像をアップ</strong>
-      オッズ画面＋詳細出馬表の2枚推奨（複数可）
+      詳細出馬表2〜3枚＋オッズ画面1枚推奨
     </div>
     <div class="preview-imgs" id="previewImgs"></div>
   </div>
 
-  <div style="margin-top:10px;font-size:.75rem;color:var(--text-dim)">💡 APIキーは設定タブで先に保存してください</div>
+  <div style="margin-top:10px;font-size:.75rem;color:var(--text-dim)">💡 詳細出馬表2〜3枚＋オッズ画面1枚が最適</div>
 
   <button class="btn btn-full btn-gold" id="analyzeBtn" onclick="runAnalysis()" disabled>
     🤖 AI分析スタート
@@ -427,7 +432,7 @@ GⅠ等(F)では能力差が明確なら買われ過ぎでも軸に許容。
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-5',
-          max_tokens: 2000,
+          max_tokens: 8000,
           messages: [{ role: 'user', content: [...imgContents, { type: 'text', text: prompt }] }]
         })
       });
