@@ -12,7 +12,8 @@
     --text-dim:#7ea880;--red:#e05050;--blue:#4a9edd;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--dark);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;
+  html{max-width:100vw;overflow-x:hidden}
+  body{background:var(--dark);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;max-width:100vw;overflow-x:hidden;
     background-image:radial-gradient(ellipse at 20% 0%,rgba(26,92,42,.4) 0%,transparent 50%),
     radial-gradient(ellipse at 80% 100%,rgba(201,168,76,.15) 0%,transparent 50%)}
   header{background:linear-gradient(135deg,var(--green) 0%,#0d2410 100%);border-bottom:2px solid var(--gold);
@@ -61,26 +62,38 @@
     border-bottom:1px solid var(--gold);display:flex;justify-content:space-between;align-items:center}
   .result-title{font-weight:700;color:var(--gold-light);font-size:.95rem}
   .result-badge{color:var(--dark);font-weight:900;font-size:.75rem;padding:3px 10px;border-radius:20px}
-  .result-body{padding:14px}
+  .result-body{padding:10px}
   .result-body h3{font-size:.72rem;color:var(--gold);letter-spacing:2px;margin:14px 0 7px;
     border-left:3px solid var(--gold);padding-left:8px}
   .result-body h3:first-child{margin-top:0}
   .result-text{font-size:.82rem;line-height:1.7;color:var(--text);white-space:pre-wrap}
 
   /* Table */
-  .odds-table{width:100%;border-collapse:collapse;font-size:.7rem;margin-top:6px}
-  .odds-table th{background:var(--panel2);color:var(--gold);padding:6px 3px;text-align:center;
-    font-weight:700;border-bottom:1px solid var(--green-light)}
-  .odds-table td{padding:6px 3px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text)}
+  .odds-table{width:100%;border-collapse:collapse;font-size:.62rem;margin-top:6px;table-layout:fixed}
+  .odds-table th{background:var(--panel2);color:var(--gold);padding:5px 2px;text-align:center;
+    font-weight:700;border-bottom:1px solid var(--green-light);font-size:.6rem;word-break:keep-all}
+  .odds-table td{padding:5px 2px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);
+    color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .odds-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
-  .rank-1 td:first-child{color:var(--gold);font-weight:900;font-size:.95rem}
+  .odds-table td:nth-child(3){text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rank-1 td:first-child{color:var(--gold);font-weight:900;font-size:.85rem}
+  .odds-table col.col-rank{width:20px}
+  .odds-table col.col-num{width:28px}
+  .odds-table col.col-name{width:auto}
+  .odds-table col.col-odds{width:36px}
+  .odds-table col.col-layer{width:44px}
+  .odds-table col.col-score{width:24px}
+  .odds-table col.col-jockey{width:24px}
+  .odds-table col.col-ev{width:30px}
 
   /* Bets */
   .buy-list{list-style:none}
-  .buy-list li{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
-    margin-bottom:5px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--green-light)}
-  .buy-list li .bet{font-weight:700;color:var(--gold-light);font-size:.82rem}
-  .buy-list li .amt{color:var(--blue);font-weight:700;font-size:.82rem}
+  .buy-list li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;
+    margin-bottom:5px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--green-light);
+    min-width:0;gap:6px}
+  .buy-list li .bet{font-weight:700;color:var(--gold-light);font-size:.78rem;flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .buy-list li .amt{color:var(--blue);font-weight:700;font-size:.78rem;flex-shrink:0}
   .buy-total{text-align:right;font-weight:900;color:var(--gold);font-size:.88rem;margin-top:8px;
     padding-top:8px;border-top:1px solid var(--green-light)}
   .recovery-bar{background:var(--panel2);border-radius:8px;height:26px;overflow:hidden;margin-top:6px;position:relative}
@@ -494,7 +507,7 @@ function renderResult(r) {
   const as_ = r.axis_sub || null;
   const axisCard = am ? `
     <div style="background:linear-gradient(135deg,rgba(255,156,64,.15),rgba(255,156,64,.05));
-      border:2px solid #ff9c40;border-radius:12px;padding:14px;margin-bottom:4px">
+      border:2px solid #ff9c40;border-radius:12px;padding:12px;margin-bottom:4px;word-break:break-all">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <span style="font-size:1.3rem">🎯</span>
         <div style="flex:1">
@@ -569,7 +582,12 @@ function renderResult(r) {
     <h3>📊 期待値ランキング <span style="color:#ff9c40;font-size:.7rem">🎯=軸</span></h3>
     <div style="overflow-x:auto">
     <table class="odds-table">
-      <thead><tr><th>順</th><th>馬番</th><th>馬名</th><th>単勝</th><th>層</th><th>能力</th><th>調子</th><th>騎手</th><th>EV</th></tr></thead>
+      <colgroup>
+        <col class="col-rank"><col class="col-num"><col class="col-name">
+        <col class="col-odds"><col class="col-layer"><col class="col-score">
+        <col class="col-score"><col class="col-jockey"><col class="col-ev">
+      </colgroup>
+      <thead><tr><th>順</th><th>番</th><th>馬名</th><th>単勝</th><th>層</th><th>能</th><th>調</th><th>騎</th><th>EV</th></tr></thead>
       <tbody>${topRows}</tbody>
     </table></div>
     ${restCount > 0 ? `
@@ -580,7 +598,12 @@ function renderResult(r) {
     </button>
     <div class="rest-ranking" style="display:none;margin-top:6px;overflow-x:auto">
     <table class="odds-table">
-      <thead><tr><th>順</th><th>馬番</th><th>馬名</th><th>単勝</th><th>層</th><th>能力</th><th>調子</th><th>騎手</th><th>EV</th></tr></thead>
+      <colgroup>
+        <col class="col-rank"><col class="col-num"><col class="col-name">
+        <col class="col-odds"><col class="col-layer"><col class="col-score">
+        <col class="col-score"><col class="col-jockey"><col class="col-ev">
+      </colgroup>
+      <thead><tr><th>順</th><th>番</th><th>馬名</th><th>単勝</th><th>層</th><th>能</th><th>調</th><th>騎</th><th>EV</th></tr></thead>
       <tbody>${restRows}</tbody>
     </table></div>` : ''}
     <h3>💰 投資戦略（${r.ticket_type||'-'}）</h3>
