@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="hdr-date" id="hdrDate">読み込み中...</div>
       <div class="hdr-sub" id="hdrSub">大丸交通 葛飾510あ1508</div>
       <div style="font-size:9px;color:var(--muted);margin-top:2px;">
-        v2.6 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
+        v2.7 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
       </div>
     </div>
     <div style="text-align:right">
@@ -376,6 +376,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </section>
 
 <section class="sec" id="sec-check">
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-ttl">データ管理</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">カレンダーに大量の「出番」が誤って登録された場合、ここで一括削除できます。</div>
+    <button onclick="cleanupWorkEvents()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:2px;font-size:12px;color:#c0392b;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;">🗑️ 「出番」イベントを全削除</button>
+    <div id="cleanupResult" style="font-size:11px;color:var(--green);margin-top:8px;display:none;"></div>
+  </div>
   <div class="chk-hdr">
     <div><div class="chk-prog" id="chkProg">0/8</div><div class="chk-lbl">完了 / 全体</div></div>
     <div style="text-align:right"><div style="font-family:'Shippori Mincho',serif;font-size:19px" id="chkStreak">🔥 0日</div><div class="chk-lbl">連続達成</div></div>
@@ -1713,6 +1719,19 @@ function drawFamBioCharts() {
 
 // チェックリスト
 // ============================================================
+function cleanupWorkEvents() {
+  var before = events.length;
+  events = events.filter(function(e){ return e.category !== 'work'; });
+  workdays = [];
+  sv(EVENTS_KEY, events);
+  sv(WORKDAYS_KEY, workdays);
+  var removed = before - events.length;
+  renderCalendar(); renderSchedule(); renderTodaySch(); renderMonthly();
+  var r = el('cleanupResult');
+  r.style.display = 'block';
+  r.textContent = '✅ ' + removed + '件の「出番」を削除しました';
+}
+
 function renderCheck() {
   var tStr = todayStr();
   if (!checks[tStr]) checks[tStr] = {};
@@ -2014,9 +2033,20 @@ function readSchedPhoto(input) {
     var b64 = e.target.result.split(',')[1];
     el('schedLoading').classList.add('show');
     el('schedResult').classList.remove('show');
-    var prompt = '大丸交通出勤予定表から吉久昌志（20001902）の出勤日を読み取りJSONのみ返してください。{"year":数値,"month":数値,"work_dates":["YYYY-MM-DD"],"close_day":15}';
+    var ctxYear = TODAY.getFullYear();
+    var prompt = '大丸交通出勤予定表から吉久昌志（20001902）の出勤日を読み取りJSONのみ返してください。注意：表に年の記載が無い場合は' + ctxYear + '年として扱ってください。{"year":数値,"month":数値,"work_dates":["YYYY-MM-DD"],"close_day":15}';
     callApi(b64, file.type, prompt, function(parsed) {
       var wdArr = parsed.work_dates || [];
+      // 年の異常値を補正（現在年から±1年以上ずれていたら現在年に補正）
+      var nowYear = TODAY.getFullYear();
+      for (var fi = 0; fi < wdArr.length; fi++) {
+        var dParts = wdArr[fi].split('-');
+        var dYear = parseInt(dParts[0]);
+        if (Math.abs(dYear - nowYear) > 1) {
+          dParts[0] = String(nowYear);
+          wdArr[fi] = dParts.join('-');
+        }
+      }
       for (var i = 0; i < wdArr.length; i++) {
         if (workdays.indexOf(wdArr[i]) < 0) workdays.push(wdArr[i]);
       }
