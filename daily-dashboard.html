@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="hdr-date" id="hdrDate">読み込み中...</div>
       <div class="hdr-sub" id="hdrSub">大丸交通 葛飾510あ1508</div>
       <div style="font-size:9px;color:var(--muted);margin-top:2px;">
-        v2.9 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
+        v3.0 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
       </div>
     </div>
     <div style="text-align:right">
@@ -1724,6 +1724,14 @@ function drawFamBioCharts() {
 // チェックリスト
 // ============================================================
 function cleanupWorkEvents() {
+  var workCount = events.filter(function(e){ return e.category === 'work'; }).length;
+  if (workCount === 0) {
+    var r0 = el('cleanupResult');
+    r0.style.display = 'block';
+    r0.textContent = '「出番」イベントはありません';
+    return;
+  }
+  if (!confirm('「出番」イベントを' + workCount + '件、全て削除します。\n元に戻せません。よろしいですか？')) return;
   var before = events.length;
   events = events.filter(function(e){ return e.category !== 'work'; });
   workdays = [];
