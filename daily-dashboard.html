@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="hdr-date" id="hdrDate">読み込み中...</div>
       <div class="hdr-sub" id="hdrSub">大丸交通 葛飾510あ1508</div>
       <div style="font-size:9px;color:var(--muted);margin-top:2px;">
-        v2.7 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
+        v2.9 　<a href="javascript:location.reload(true)" style="color:var(--gold);text-decoration:none;">🔄 更新</a>
       </div>
     </div>
     <div style="text-align:right">
@@ -1070,17 +1070,21 @@ function renderSchedule() {
     container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">予定はありません<br>カレンダーの日付をタップで追加</div>';
     return;
   }
-  var wd = ['日','月','火','水','木','金','土'];
+  var tStr = todayStr();
   var sorted = events.slice().sort(function(a,b){ return (a.date+a.time) > (b.date+b.time) ? 1 : -1; });
-  // 家族カテゴリは全て除外（家族スケジュール欄に表示）
-  sorted = sorted.filter(function(e){ return e.category !== 'family'; });
+  // 家族カテゴリは全て除外（家族スケジュール欄に表示）、今日の予定のみ表示
+  sorted = sorted.filter(function(e){ return e.category !== 'family' && e.date === tStr; });
+  if (!sorted.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">今日の予定はありません<br>カレンダーの日付をタップで追加</div>';
+    return;
+  }
+  var wd = ['日','月','火','水','木','金','土'];
   var grouped = {};
   for (var i = 0; i < sorted.length; i++) {
     var ev = sorted[i];
     if (!grouped[ev.date]) grouped[ev.date] = [];
     grouped[ev.date].push(ev);
   }
-  var tStr = todayStr();
   var tmrDate = new Date(TODAY.getTime() + 86400000);
   var tmrStr = ds(tmrDate);
   var h = '';
@@ -2034,7 +2038,7 @@ function readSchedPhoto(input) {
     el('schedLoading').classList.add('show');
     el('schedResult').classList.remove('show');
     var ctxYear = TODAY.getFullYear();
-    var prompt = '大丸交通出勤予定表から吉久昌志（20001902）の出勤日を読み取りJSONのみ返してください。注意：表に年の記載が無い場合は' + ctxYear + '年として扱ってください。{"year":数値,"month":数値,"work_dates":["YYYY-MM-DD"],"close_day":15}';
+    var prompt = '大丸交通出勤予定表（吉久昌志、コード20001902）の画像を読み取ってください。表は「元出番」列と「変更後」列の2列構成の場合があります。各日について、変更後の列に「◯」「隔」「昼」のいずれかの記入があればその日を出勤日とし、変更後が「✖️」やバツ印の場合はその日は出勤日に含めないでください（元出番列の記載や備考・営収記帳欄の文字は無視）。表が1列のみ（出番/休のみ）の場合は出番の日を出勤日としてください。手書きで年が「20XX年〜20XX年」のように2年分書かれている場合、各月がどちらの年に属するか正しく判定してください（例：12月は前の年、1月は後の年）。年の記載が全く無い場合は' + ctxYear + '年として扱ってください。{"year":数値,"month":数値,"work_dates":["YYYY-MM-DD"],"close_day":15}';
     callApi(b64, file.type, prompt, function(parsed) {
       var wdArr = parsed.work_dates || [];
       // 年の異常値を補正（現在年から±1年以上ずれていたら現在年に補正）
